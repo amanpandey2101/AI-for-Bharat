@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { roboto } from "@/utils/font";
+import { roboto } from "@/lib/font";
 import Image from "next/image";
 import { Button } from "./ui/button";
 import Link from "next/link";
