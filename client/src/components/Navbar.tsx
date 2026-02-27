@@ -12,7 +12,7 @@ function Navbar() {
           "bg-white w-fit p-4 mt-4 rounded-2xl shadow-card flex flex-row gap-4",
         )}
       >
-        <Link href={"/"}>
+        <Link href={"/"} className="flex justify-center items-center">
 
           <div className="flex flex-row  gap-4 items-center">
             <svg
