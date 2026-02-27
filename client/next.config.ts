@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
       hostname:'cdn.prod.website-files.com',
               protocol: 'https',
 
+    },
+    {
+      hostname:'avatars.githubusercontent.com',
+      protocol:"https"
     }
   ]
   }

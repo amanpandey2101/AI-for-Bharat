@@ -1,12 +1,20 @@
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import "./home.css";
+import { AppSidebar } from "@/components/app-sidebar";
 import { AuthProvider } from "@/context/AuthContext";
-import React from "react";
+function page({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <AuthProvider>
 
-function layout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return <AuthProvider>{children}</AuthProvider>;
+    <SidebarProvider>
+      <AppSidebar />
+      <main>
+        <SidebarTrigger />
+        {children}
+      </main>
+    </SidebarProvider>
+    </AuthProvider>
+  );
 }
 
-export default layout;
+export default page;
