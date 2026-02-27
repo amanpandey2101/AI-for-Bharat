@@ -1,18 +1,17 @@
 import { cn } from "@/lib/utils";
-import { roboto } from "@/utils/font";
-import Image from "next/image";
+import { roboto } from "@/lib/font";
 import { Button } from "./ui/button";
 import Link from "next/link";
 
 function Navbar() {
   return (
-    <div className="w-full flex justify-center fixed z-20 bg-transparent">
+    <div className="w-full flex justify-center fixed z-20 bg-transparent navbar">
       <div
         className={cn(
           "bg-white w-fit p-4 mt-4 rounded-2xl shadow-card flex flex-row gap-4",
         )}
       >
-        <Link href={"/"}>
+        <Link className="justify-center items-center flex" href={"/"}>
       
         <div className="flex flex-row  gap-4 items-center">
           <svg
