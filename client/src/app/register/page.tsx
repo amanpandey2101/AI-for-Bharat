@@ -37,15 +37,15 @@ export default function RegisterPage() {
       );
       const message = res.data.message;
       toast(message);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err.response?.data?.message || "Something went wrong. Try again.";
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
       toast(message);
     } finally {
       setLoading(false);
     }
   };
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,

@@ -100,7 +100,7 @@ export default function HowItWorksPage() {
                     Ready to eliminate organizational amnesia?
                 </h2>
                 <p className="text-slate-500 mb-8 max-w-xl mx-auto">
-                    Start building your team's decision knowledge graph today. Connect your GitHub repository in seconds.
+                    Start building your team&apos;s decision knowledge graph today. Connect your GitHub repository in seconds.
                 </p>
                 <button className="bg-black text-white px-8 py-4 rounded-xl font-medium hover:bg-slate-800 transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5 max-w-sm w-full">
                     Integrate with GitHub
