@@ -164,7 +164,7 @@ export default function DecisionsPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
+
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -245,7 +245,6 @@ export default function DecisionsPage() {
               >
                 <CardContent className="py-4 px-5">
                   <div className="flex items-start gap-4">
-                    {/* Confidence bar */}
                     <div className="flex flex-col items-center gap-1 pt-1 shrink-0 w-12">
                       <span
                         className={`text-sm font-bold ${confidenceColor(d.confidence)}`}
@@ -260,7 +259,7 @@ export default function DecisionsPage() {
                       </div>
                     </div>
 
-                    {/* Content */}
+        
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-sm truncate">

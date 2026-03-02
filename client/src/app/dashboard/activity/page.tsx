@@ -82,7 +82,7 @@ export default function ActivityPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-6 py-8">
-      {/* Header */}
+
       <div className="flex items-start justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -115,7 +115,7 @@ export default function ActivityPage() {
         </Button>
       </div>
 
-      {/* Platform filter */}
+      
       <div className="flex items-center gap-2 mb-6">
         <Filter className="w-4 h-4 text-muted-foreground" />
         {PLATFORMS.map((p) => (
@@ -131,7 +131,7 @@ export default function ActivityPage() {
         ))}
       </div>
 
-      {/* Events */}
+      
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -158,7 +158,7 @@ export default function ActivityPage() {
             >
               <CardContent className="py-4 px-5">
                 <div className="flex items-start gap-4">
-                  {/* Platform badge */}
+ 
                   <div
                     className={`px-2 py-1 rounded-md text-xs font-medium uppercase shrink-0 ${
                       PLATFORM_COLORS[event.platform] || "bg-gray-200"
@@ -167,14 +167,13 @@ export default function ActivityPage() {
                     {event.platform}
                   </div>
 
-                  {/* Event icon */}
                   <div className="mt-0.5 text-muted-foreground shrink-0">
                     {EVENT_ICONS[event.event_type] || (
                       <Activity className="w-4 h-4" />
                     )}
                   </div>
 
-                  {/* Content */}
+           
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm truncate">
