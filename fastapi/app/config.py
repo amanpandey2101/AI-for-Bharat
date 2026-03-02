@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     # Core
     SECRET_KEY: str = "secret"
     JWT_SECRET_KEY: str = "jwt-secret"
-    JWT_COOKIE_SECURE: bool = False
-    JWT_COOKIE_SAMESITE: str = "lax"
+    JWT_COOKIE_SECURE: bool = True
+    JWT_COOKIE_SAMESITE: str = "none"
     JWT_ACCESS_COOKIE_PATH: str = "/"
     JWT_ACCESS_COOKIE_NAME: str = "access_token_cookie"
 
