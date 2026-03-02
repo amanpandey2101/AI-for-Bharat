@@ -30,7 +30,6 @@ class SearchRequest(BaseModel):
     question: str
 
 
-# ── Stats (must come before /{decision_id}) ────────────────────────────────────
 
 @decision_router.get("/stats/overview")
 def decision_stats(user_id: str = Depends(get_current_user_id)):
@@ -101,7 +100,6 @@ def list_decisions(
     limit: int = Query(50, le=100),
     user_id: str = Depends(get_current_user_id),
 ):
-    """List decisions — optionally filter by status or repository."""
     if repository:
         decisions = DecisionRepository.list_by_repository(repository, limit)
     elif status:
@@ -134,7 +132,6 @@ def list_decisions(
     }
 
 
-# ── Get single decision ───────────────────────────────────────────────────────
 
 @decision_router.get("/{decision_id}")
 def get_decision(
@@ -151,7 +148,6 @@ def get_decision(
     }
 
 
-# ── Validate / Dispute ────────────────────────────────────────────────────────
 
 @decision_router.post("/{decision_id}/validate")
 def validate_decision(
@@ -176,7 +172,6 @@ def validate_decision(
     }
 
 
-# ── Delete ─────────────────────────────────────────────────────────────────────
 
 @decision_router.delete("/{decision_id}")
 def delete_decision(

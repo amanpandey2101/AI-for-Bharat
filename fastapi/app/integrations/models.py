@@ -26,7 +26,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# ── Table ──────────────────────────────────────────────────────────────────────
 
 INTEGRATIONS_TABLE_NAME = get_table_name("integrations")
 
@@ -92,7 +91,7 @@ def create_integrations_table():
 class ConnectedResource(BaseModel):
     """A repo, channel, or project the user has connected for monitoring."""
     resource_id: str           # e.g. repo full_name, channel ID, project key
-    resource_name: str         # human-readable name
+    resource_name: str         
     resource_type: str = ""    # "repository", "channel", "project"
     webhook_registered: bool = False
     platform_webhook_id: Optional[str] = None  # ID returned by the platform API
@@ -104,26 +103,21 @@ class IntegrationModel(BaseModel):
     user_id: str
     platform: str  # github, gitlab, slack, jira
 
-    # OAuth
     access_token: str = ""
     refresh_token: Optional[str] = None
     token_expires_at: Optional[str] = None
     scopes: List[str] = Field(default_factory=list)
 
-    # Webhook
     webhook_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     webhook_secret: str = Field(default_factory=lambda: secrets.token_hex(32))
 
-    # Connected resources
     resources: List[ConnectedResource] = Field(default_factory=list)
 
-    # Platform-specific user info
     platform_user_id: Optional[str] = None
     platform_username: Optional[str] = None
     platform_org: Optional[str] = None
 
-    # Metadata
-    status: str = "active"  # active, disconnected, error
+    status: str = "active" 
     created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
@@ -179,7 +173,6 @@ class IntegrationModel(BaseModel):
         )
 
 
-# ── Repository ─────────────────────────────────────────────────────────────────
 
 class IntegrationRepository:
     """DynamoDB CRUD for integrations."""
@@ -236,7 +229,6 @@ class IntegrationRepository:
         Used when an inbound webhook arrives to route it to the right user.
         """
         table = get_integrations_table()
-        # Scan with filter — acceptable for now (could add a GSI for production)
         response = table.scan(
             FilterExpression="platform = :p AND contains(#res, :rid)",
             ExpressionAttributeNames={"#res": "resources"},

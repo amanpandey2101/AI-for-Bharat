@@ -20,7 +20,6 @@ GITHUB_OAUTH_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 GITHUB_API_URL = "https://api.github.com"
 
-# Scopes needed: repo access + webhook management
 GITHUB_SCOPES = "repo,admin:repo_hook,read:org,user:email"
 
 
