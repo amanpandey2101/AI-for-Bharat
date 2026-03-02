@@ -222,6 +222,7 @@ def github_login():
         f"https://github.com/login/oauth/authorize"
         f"?client_id={settings.GITHUB_CLIENT_ID}"
         f"&scope=user:email"
+        f"&redirect_uri={settings.API_BASE_URL.rstrip('/')}/auth/github/callback"
     )
     return RedirectResponse(github_url)
 
@@ -313,8 +314,11 @@ def github_callback(code: str = Query(None), state: str = Query(None)):
             UserRepository.create(user)
 
         jwt_token = create_access_token(identity=user.id)
+        
+        target_url = f"{settings.FRONTEND_URL.rstrip('/')}/dashboard"
+        logger.info(f"Login successful for {email}. Redirecting to {target_url}")
 
-        response = RedirectResponse(f"{settings.FRONTEND_URL}/dashboard")
+        response = RedirectResponse(target_url)
         response.set_cookie(
             key=settings.JWT_ACCESS_COOKIE_NAME,
             value=jwt_token,
