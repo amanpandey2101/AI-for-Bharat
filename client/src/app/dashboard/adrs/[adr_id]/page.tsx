@@ -83,7 +83,7 @@ export default function ADRDetailPage({
 
   return (
     <div className="w-full max-w-4xl mx-auto px-6 py-8">
-      {/* Back link */}
+ 
       <Button variant="ghost" size="sm" asChild className="mb-6 -ml-3 text-muted-foreground">
         <Link href="/dashboard/adrs">
           <ArrowLeft className="w-4 h-4 mr-1.5" />
@@ -91,7 +91,6 @@ export default function ADRDetailPage({
         </Link>
       </Button>
 
-      {/* Header */}
       <div className="space-y-6 mb-10 pb-6 border-b">
         <div className="flex items-start justify-between gap-6">
           <h1 className="text-3xl font-bold tracking-tight">{adr.title}</h1>
@@ -150,7 +149,7 @@ export default function ADRDetailPage({
         </div>
       </div>
 
-      {/* Content */}
+    
       <div className="space-y-10">
         <section>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">

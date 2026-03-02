@@ -37,8 +37,6 @@ export default function ADRsPage() {
   const { activeWorkspace } = useWorkspace();
   const [adrs, setAdrs] = useState<ADR[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Create Flow
   const [createOpen, setCreateOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
@@ -96,7 +94,7 @@ export default function ADRsPage() {
         context: context.trim(),
         decision: decision.trim(),
         consequences: consequences.trim(),
-        status: "accepted", // Defaulting to accepted for simplicity
+        status: "accepted", 
       });
       setAdrs([res.data.adr, ...adrs]);
       toast.success("ADR created successfully");
@@ -149,7 +147,6 @@ export default function ADRsPage() {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-6 py-8">
-      {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -172,7 +169,7 @@ export default function ADRsPage() {
         </Button>
       </div>
 
-      {/* List */}
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -252,7 +249,7 @@ export default function ADRsPage() {
         </div>
       )}
 
-      {/* Create Dialog */}
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader className="flex flex-row items-center justify-between pr-8">

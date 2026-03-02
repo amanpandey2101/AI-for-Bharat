@@ -12,7 +12,6 @@ import { Loader2 } from "lucide-react";
 function DashboardGate({ children }: { children: React.ReactNode }) {
   const { loading, needsOnboarding } = useWorkspace();
 
-  // Show loading spinner while checking workspace state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -21,12 +20,10 @@ function DashboardGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // No workspace? Show onboarding — no sidebar, no navigation
   if (needsOnboarding) {
     return <WorkspaceOnboarding />;
   }
 
-  // Has workspace → show full dashboard with sidebar
   return (
     <SidebarProvider>
       <AppSidebar />

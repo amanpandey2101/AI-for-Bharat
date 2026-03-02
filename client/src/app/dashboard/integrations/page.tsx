@@ -49,7 +49,7 @@ function IntegrationsContent() {
     fetchIntegrations();
   }, [fetchIntegrations]);
 
-  // Show toast when redirected back from OAuth
+
   useEffect(() => {
     const connected = searchParams.get("connected");
     if (connected) {
@@ -87,7 +87,6 @@ function IntegrationsContent() {
 
   return (
     <div className="w-full max-w-5xl mx-auto px-6 py-8">
-      {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -124,7 +123,6 @@ function IntegrationsContent() {
         </Button>
       </div>
 
-      {/* Stats bar */}
       <div className="flex items-center gap-6 mb-8 px-4 py-3 bg-muted/50 rounded-xl border">
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-amber-500" />
@@ -142,7 +140,7 @@ function IntegrationsContent() {
         </span>
       </div>
 
-      {/* Cards grid */}
+  
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
