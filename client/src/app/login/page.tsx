@@ -36,9 +36,9 @@ export default function LoginPage() {
       if (res.data.success) {
         router.push("/dashboard");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err.response?.data?.message || "Something went wrong. Try again.";
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
       toast(message);
     } finally {
       setLoading(false);

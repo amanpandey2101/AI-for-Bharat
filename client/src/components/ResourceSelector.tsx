@@ -59,55 +59,55 @@ export default function ResourceSelector({
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        setLoading(true);
+        let items: ResourceItem[] = [];
+
+        if (platform === "github") {
+          const res = await getGitHubRepos();
+          items = res.data.repos.map((r: Repo) => ({
+            id: r.full_name,
+            name: r.name,
+            description: r.full_name,
+            isPrivate: r.private,
+            extra: r.owner,
+          }));
+        } else if (platform === "gitlab") {
+          const res = await getGitLabRepos();
+          items = res.data.repos.map((r: Repo) => ({
+            id: String(r.id),
+            name: r.name,
+            description: r.full_name || r.name,
+            isPrivate: r.private,
+          }));
+        } else if (platform === "slack") {
+          const res = await getSlackChannels();
+          items = res.data.channels.map((c: SlackChannel) => ({
+            id: c.id,
+            name: c.name,
+            isPrivate: c.is_private,
+            extra: `${c.num_members} members`,
+          }));
+        } else if (platform === "jira") {
+          const res = await getJiraProjects();
+          items = res.data.projects.map((p: JiraProject) => ({
+            id: p.key,
+            name: p.name,
+            description: p.key,
+          }));
+        }
+
+        setResources(items);
+      } catch {
+        toast.error(`Failed to load ${platform} resources`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchResources();
   }, [platform]);
-
-  const fetchResources = async () => {
-    try {
-      setLoading(true);
-      let items: ResourceItem[] = [];
-
-      if (platform === "github") {
-        const res = await getGitHubRepos();
-        items = res.data.repos.map((r: Repo) => ({
-          id: r.full_name,
-          name: r.name,
-          description: r.full_name,
-          isPrivate: r.private,
-          extra: r.owner,
-        }));
-      } else if (platform === "gitlab") {
-        const res = await getGitLabRepos();
-        items = res.data.repos.map((r: Repo) => ({
-          id: String(r.id),
-          name: r.name,
-          description: r.full_name || r.name,
-          isPrivate: r.private,
-        }));
-      } else if (platform === "slack") {
-        const res = await getSlackChannels();
-        items = res.data.channels.map((c: SlackChannel) => ({
-          id: c.id,
-          name: c.name,
-          isPrivate: c.is_private,
-          extra: `${c.num_members} members`,
-        }));
-      } else if (platform === "jira") {
-        const res = await getJiraProjects();
-        items = res.data.projects.map((p: JiraProject) => ({
-          id: p.key,
-          name: p.name,
-          description: p.key,
-        }));
-      }
-
-      setResources(items);
-    } catch {
-      toast.error(`Failed to load ${platform} resources`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {

@@ -51,7 +51,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteWorkspace, updateWorkspace } from "@/services/workspaces";
@@ -75,7 +75,6 @@ export function AppSidebar() {
     refreshWorkspaces,
   } = useWorkspace();
   const pathname = usePathname();
-  const router = useRouter();
 
   // Create dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -102,8 +101,10 @@ export function AppSidebar() {
       setCreateOpen(false);
       setCreateName("");
       setCreateDesc("");
-    } catch {
-      toast.error("Failed to create workspace");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
+      toast.error(message);
     } finally {
       setCreateLoading(false);
     }
@@ -120,8 +121,10 @@ export function AppSidebar() {
       toast.success("Workspace updated");
       setEditOpen(false);
       refreshWorkspaces();
-    } catch {
-      toast.error("Failed to update workspace");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
+      toast.error(message);
     } finally {
       setEditLoading(false);
     }
@@ -136,8 +139,10 @@ export function AppSidebar() {
       setDeleteOpen(false);
       setActiveWorkspace(null);
       refreshWorkspaces();
-    } catch {
-      toast.error("Failed to delete workspace");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
+      toast.error(message);
     } finally {
       setDeleteLoading(false);
     }

@@ -22,7 +22,6 @@ export function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of messages
@@ -68,7 +67,7 @@ export function ChatWidget() {
     setLoading(true);
 
     try {
-      const res = await sendMessageStream(activeWorkspace.workspace_id, userMsg.content, sessionId);
+      const res = await sendMessageStream(activeWorkspace.workspace_id, userMsg.content);
       
       if (!res.body) throw new Error("No response body");
       

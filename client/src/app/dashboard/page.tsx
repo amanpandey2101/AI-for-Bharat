@@ -7,7 +7,6 @@ import {
   Activity,
   Plug,
   Sparkles,
-  TrendingUp,
   ArrowRight,
   Loader2,
   Zap,

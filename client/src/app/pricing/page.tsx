@@ -68,7 +68,7 @@ export default function PricingPage() {
                     Simple, transparent pricing
                 </h1>
                 <p className="text-xl text-gray-500">
-                    Unlock your team's collective intelligence. Stop memory loss and build
+                    Unlock your team&apos;s collective intelligence. Stop memory loss and build
                     the future with your archived history. No hidden fees.
                 </p>
             </div>
