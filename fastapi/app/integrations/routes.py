@@ -32,11 +32,10 @@ logger = logging.getLogger(__name__)
 
 integration_router = APIRouter()
 
-# In-memory state store for OAuth CSRF protection (use Redis in production)
+
 _oauth_states: dict = {}
 
 
-# ── Request Models ─────────────────────────────────────────────────────────────
 
 class SelectReposRequest(BaseModel):
     """Request body for selecting repositories/projects/channels to monitor."""
@@ -44,7 +43,6 @@ class SelectReposRequest(BaseModel):
     resource_names: List[str] = []  # optional human-readable names
 
 
-# ── List Integrations ──────────────────────────────────────────────────────────
 
 @integration_router.get("/")
 def list_integrations(user_id: str = Depends(get_current_user_id)):
@@ -68,7 +66,6 @@ def list_integrations(user_id: str = Depends(get_current_user_id)):
     }
 
 
-# ── GitHub ─────────────────────────────────────────────────────────────────────
 
 @integration_router.get("/github/connect")
 def github_connect(user_id: str = Depends(get_current_user_id)):
