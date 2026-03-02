@@ -129,7 +129,7 @@ export default function RegisterPage() {
             type="button"
             disabled={loading}
             onClick={() =>
-              (window.location.href = "http://localhost:5000/auth/github")
+              (window.location.href = "http://memora-alb-902286918.us-west-2.elb.amazonaws.com/auth/github")
             }
           >
             <Image
