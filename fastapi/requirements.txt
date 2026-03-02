@@ -2,9 +2,8 @@ fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
-SQLAlchemy
-alembic
-psycopg2-binary
+pydantic[email]
+boto3
 bcrypt
 PyJWT
 fastapi-mail
