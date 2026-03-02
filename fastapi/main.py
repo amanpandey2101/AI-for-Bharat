@@ -9,6 +9,7 @@ from app.workspaces.routes import workspace_router
 from app.adrs.routes import adr_router
 from app.chat.routes import chat_router
 from app.database import ensure_tables_exist
+from app.config import settings
 
 import logging
 
