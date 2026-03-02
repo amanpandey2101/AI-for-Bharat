@@ -44,5 +44,4 @@ jobs:
         cd client
         npm run build
       env:
-        # Provide any necessary mock environment variables to make the build pass
         NEXT_PUBLIC_API_BASE_URL: "http://memora-alb-902286918.us-west-2.elb.amazonaws.com" 

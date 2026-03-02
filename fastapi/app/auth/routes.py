@@ -61,7 +61,7 @@ async def register(data: RegisterSchema):
 
         UserRepository.create(new_user)
 
-        verification_link = f"http://localhost:5000/auth/verify-email?token={token}"
+        verification_link = f"{settings.API_BASE_URL}/auth/verify-email?token={token}"
         await send_verification_email(new_user.email, verification_link)
 
         return JSONResponse(
