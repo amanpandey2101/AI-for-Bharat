@@ -114,9 +114,10 @@ export default function LoginPage() {
             className="w-full cursor-pointer"
             type="button"
             disabled={loading}
-            onClick={() =>
-              (window.location.href = "http://memora-alb-902286918.us-west-2.elb.amazonaws.com/auth/github")
-            }
+            onClick={() => {
+              const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+              window.location.href = `${baseUrl}/auth/github`;
+            }}
           >
             <Image
               src="/github.svg"

@@ -28,14 +28,13 @@ class GitHubService:
 
     @staticmethod
     def get_oauth_url(state: str) -> str:
-        """Generate the GitHub OAuth authorization URL.
-        Note: No redirect_uri — uses the one registered in the GitHub App settings.
-        """
+        """Generate the GitHub OAuth authorization URL."""
         return (
             f"{GITHUB_OAUTH_URL}"
             f"?client_id={settings.GITHUB_CLIENT_ID}"
             f"&scope={GITHUB_SCOPES}"
             f"&state={state}"
+            f"&redirect_uri={settings.API_BASE_URL}/auth/github/callback"
         )
 
     @staticmethod

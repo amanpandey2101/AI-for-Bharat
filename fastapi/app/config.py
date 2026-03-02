@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     MAIL_PASSWORD: Optional[str] = None
     MAIL_DEFAULT_SENDER: Optional[str] = None
 
-    # Github OAuth
+    # Github OAuth  
     GITHUB_CLIENT_ID: Optional[str] = None
     GITHUB_CLIENT_SECRET: Optional[str] = None
 
