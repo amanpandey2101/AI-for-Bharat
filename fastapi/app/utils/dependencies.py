@@ -29,8 +29,14 @@ def get_current_user_id(request: Request) -> str:
         if token:
             logger.info("[Auth] Token found in cookie")
 
+    # 3. Fall back to ?token= query parameter (for browser redirect flows like OAuth connect)
     if not token:
-        logger.warning("[Auth] No token found in header or cookie")
+        token = request.query_params.get("token")
+        if token:
+            logger.info("[Auth] Token found in query parameter")
+
+    if not token:
+        logger.warning("[Auth] No token found in header, cookie, or query")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing access token",

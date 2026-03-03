@@ -88,6 +88,7 @@ interface IntegrationCardProps {
   onDisconnect: (platform: string) => void;
   onManage: (platform: string) => void;
   disconnecting: string | null;
+  accessToken?: string | null;
 }
 
 export default function IntegrationCard({
@@ -96,6 +97,7 @@ export default function IntegrationCard({
   onDisconnect,
   onManage,
   disconnecting,
+  accessToken,
 }: IntegrationCardProps) {
   const config = PLATFORM_CONFIG[platform];
   if (!config) return null;
@@ -216,7 +218,7 @@ export default function IntegrationCard({
           </div>
         ) : (
           <a
-            href={`${API_BASE}/integrations/${platform}/connect`}
+            href={`${API_BASE}/integrations/${platform}/connect${accessToken ? `?token=${accessToken}` : ""}`}
             className=""
           >
             <Button className="w-full mt-1 cursor-pointer" type="button">

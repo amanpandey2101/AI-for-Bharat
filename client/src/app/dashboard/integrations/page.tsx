@@ -13,12 +13,14 @@ import {
   disconnectPlatform,
   type Integration,
 } from "@/services/integrations";
+import { useAuth } from "@/context/AuthContext";
 
 const PLATFORMS = ["github", "gitlab", "slack", "jira"] as const;
 
 function IntegrationsContent() {
   const searchParams = useSearchParams();
   const { activeWorkspace } = useWorkspace();
+  const { accessToken } = useAuth();
   const [integrations, setIntegrations] = useState<
     Record<string, Integration | null>
   >({});
@@ -155,6 +157,7 @@ function IntegrationsContent() {
               onDisconnect={handleDisconnect}
               onManage={handleManage}
               disconnecting={disconnecting}
+              accessToken={accessToken}
             />
           ))}
         </div>
