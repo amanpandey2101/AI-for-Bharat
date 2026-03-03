@@ -11,10 +11,11 @@ export interface ActivityEvent {
 }
 
 export const getEvents = async (
+    workspaceId: string,
     platform?: string,
     limit: number = 50
 ) => {
     const params: Record<string, string | number> = { limit };
     if (platform) params.platform = platform;
-    return api.get<{ count: number; events: ActivityEvent[] }>("/webhooks/events", { params });
+    return api.get<{ count: number; events: ActivityEvent[] }>(`/workspaces/${workspaceId}/events`, { params });
 };

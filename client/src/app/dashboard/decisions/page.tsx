@@ -25,6 +25,7 @@ import {
   type Decision,
   type DecisionStats,
 } from "@/services/decisions";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const STATUS_CONFIG: Record<
   string,
@@ -90,6 +91,7 @@ function timeAgo(timestamp: string) {
 }
 
 export default function DecisionsPage() {
+  const { activeWorkspace } = useWorkspace();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [stats, setStats] = useState<DecisionStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,11 +99,15 @@ export default function DecisionsPage() {
   const [validatingId, setValidatingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!activeWorkspace) return;
     try {
       setLoading(true);
       const [decisionsRes, statsRes] = await Promise.all([
-        getDecisions(statusFilter === "all" ? undefined : statusFilter),
-        getDecisionStats(),
+        getDecisions(
+          activeWorkspace.workspace_id,
+          statusFilter === "all" ? undefined : statusFilter
+        ),
+        getDecisionStats(activeWorkspace.workspace_id),
       ]);
       setDecisions(decisionsRes.data.decisions);
       setStats(statsRes.data);
@@ -110,7 +116,7 @@ export default function DecisionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, activeWorkspace]);
 
   useEffect(() => {
     fetchData();

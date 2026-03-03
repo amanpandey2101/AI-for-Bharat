@@ -191,6 +191,12 @@ def list_workspace_decisions(
     if not ws:
         raise HTTPException(status_code=404, detail="Workspace not found")
 
+    # Access control: ensure user is owner or member
+    is_owner = ws.owner_id == user_id
+    is_member = any(m.user_id == user_id for m in ws.members)
+    if not (is_owner or is_member):
+        raise HTTPException(status_code=403, detail="Not authorized to access this workspace")
+
     # Get resource IDs for this workspace
     resource_ids = {r.resource_id for r in ws.resources}
 
@@ -203,7 +209,7 @@ def list_workspace_decisions(
     # Filter to only decisions from workspace resources
     workspace_decisions = [
         d for d in all_decisions
-        if d.repository in resource_ids or not resource_ids
+        if d.repository in resource_ids
     ][:limit]
 
     return {
@@ -222,5 +228,109 @@ def list_workspace_decisions(
             for d in workspace_decisions
         ],
         "total": len(workspace_decisions),
+        "workspace_id": workspace_id,
+    }
+
+
+@workspace_router.get("/{workspace_id}/decisions/stats")
+def workspace_decision_stats(
+    workspace_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Get high-level decision stats scoped to a workspace."""
+    from app.decisions import DecisionRepository
+
+    ws = WorkspaceRepository.get(workspace_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    is_owner = ws.owner_id == user_id
+    is_member = any(m.user_id == user_id for m in ws.members)
+    if not (is_owner or is_member):
+        raise HTTPException(status_code=403, detail="Not authorized to access this workspace")
+
+    resource_ids = {r.resource_id for r in ws.resources}
+    all_decisions = DecisionRepository.list_recent(limit=200)
+
+    workspace_decisions = [
+        d for d in all_decisions
+        if d.repository in resource_ids
+    ]
+
+    total = len(workspace_decisions)
+    by_status = {}
+    by_platform = {}
+    avg_confidence = 0.0
+
+    for d in workspace_decisions:
+        by_status[d.status] = by_status.get(d.status, 0) + 1
+        by_platform[d.platform] = by_platform.get(d.platform, 0) + 1
+        avg_confidence += d.confidence.overall
+
+    return {
+        "total_decisions": total,
+        "by_status": by_status,
+        "by_platform": by_platform,
+        "avg_confidence": round(avg_confidence / total, 2) if total > 0 else 0,
+        "pending_validation": by_status.get("inferred", 0),
+    }
+
+
+@workspace_router.get("/{workspace_id}/events")
+def list_workspace_events(
+    workspace_id: str,
+    limit: int = Query(20, le=100),
+    user_id: str = Depends(get_current_user_id),
+):
+    """List recent ingestion events scoped to this workspace's resources."""
+    from app.webhooks.event_store import EventRepository
+    
+    ws = WorkspaceRepository.get(workspace_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    is_owner = ws.owner_id == user_id
+    is_member = any(m.user_id == user_id for m in ws.members)
+    if not (is_owner or is_member):
+        raise HTTPException(status_code=403, detail="Not authorized to access this workspace")
+
+    # Which resources belong to this workspace
+    # GitHub/GitLab uses 'repository', Slack uses 'channel', Jira uses 'project'
+    resource_ids = {r.resource_id for r in ws.resources}
+    
+    events = []
+    # Collect events across platforms
+    for p in ["github", "gitlab", "slack", "jira"]:
+        events.extend(EventRepository.list_by_platform(p, limit=limit))
+    
+    # Filter strictly to the workspace resources
+    workspace_events = []
+    for e in events:
+        ctx = e.context
+        if ctx.repository in resource_ids:
+            workspace_events.append(e)
+        elif ctx.channel in resource_ids:
+            workspace_events.append(e)
+        elif ctx.project in resource_ids:
+            workspace_events.append(e)
+            
+    # Sort and paginate
+    workspace_events.sort(key=lambda ev: ev.timestamp, reverse=True)
+    workspace_events = workspace_events[:limit]
+
+    return {
+        "count": len(workspace_events),
+        "events": [
+            {
+                "event_id": e.event_id,
+                "platform": e.platform.value,
+                "event_type": e.event_type.value,
+                "title": e.title,
+                "status": e.status.value,
+                "timestamp": e.timestamp,
+                "author": e.author.name if e.author else None,
+            }
+            for e in workspace_events
+        ],
         "workspace_id": workspace_id,
     }

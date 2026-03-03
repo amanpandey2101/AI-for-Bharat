@@ -13,7 +13,6 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
 
 
-# ── Enums ──────────────────────────────────────────────────────────────────────
 
 class Platform(str, Enum):
     GITHUB = "github"
@@ -23,7 +22,6 @@ class Platform(str, Enum):
 
 
 class EventType(str, Enum):
-    # Code-related
     PR_CREATED = "pr_created"
     PR_UPDATED = "pr_updated"
     PR_MERGED = "pr_merged"

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getEvents, type ActivityEvent } from "@/services/events";
+import { useWorkspace } from "@/context/WorkspaceContext";
 
 const PLATFORM_COLORS: Record<string, string> = {
   github: "bg-gray-900 text-white",
@@ -58,14 +59,17 @@ function formatEventType(type: string): string {
 }
 
 export default function ActivityPage() {
+  const { activeWorkspace } = useWorkspace();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<string>("all");
 
   const fetchEvents = useCallback(async () => {
+    if (!activeWorkspace) return;
     try {
       setLoading(true);
       const res = await getEvents(
+        activeWorkspace.workspace_id,
         platform === "all" ? undefined : platform
       );
       setEvents(res.data.events || []);
@@ -74,7 +78,7 @@ export default function ActivityPage() {
     } finally {
       setLoading(false);
     }
-  }, [platform]);
+  }, [platform, activeWorkspace]);
 
   useEffect(() => {
     fetchEvents();

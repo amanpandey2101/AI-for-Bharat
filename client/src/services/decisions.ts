@@ -52,6 +52,7 @@ export interface DecisionStats {
 }
 
 export const getDecisions = async (
+    workspaceId: string,
     status?: string,
     repository?: string,
     limit: number = 50
@@ -59,7 +60,7 @@ export const getDecisions = async (
     const params: Record<string, string | number> = { limit };
     if (status) params.status = status;
     if (repository) params.repository = repository;
-    return api.get<{ decisions: Decision[]; total: number }>("/decisions/", {
+    return api.get<{ decisions: Decision[]; total: number }>(`/workspaces/${workspaceId}/decisions`, {
         params,
     });
 };
@@ -76,8 +77,8 @@ export const validateDecision = async (
     return api.post(`/decisions/${id}/validate`, { status, comment });
 };
 
-export const getDecisionStats = async () => {
-    return api.get<DecisionStats>("/decisions/stats/overview");
+export const getDecisionStats = async (workspaceId: string) => {
+    return api.get<DecisionStats>(`/workspaces/${workspaceId}/decisions/stats`);
 };
 
 export const deleteDecision = async (id: string) => {

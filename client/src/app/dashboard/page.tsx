@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { getDecisionStats, type DecisionStats } from "@/services/decisions";
 import { getIntegrations, type Integration } from "@/services/integrations";
 import { getEvents, type ActivityEvent } from "@/services/events";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAuth } from "@/context/AuthContext";
 
 function timeAgo(timestamp: string) {
@@ -36,18 +37,20 @@ function timeAgo(timestamp: string) {
 export default function DashboardHome() {
   const router = useRouter();
   const { user } = useAuth();
+  const { activeWorkspace } = useWorkspace();
   const [stats, setStats] = useState<DecisionStats | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [recentEvents, setRecentEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    if (!activeWorkspace) return;
     try {
       setLoading(true);
       const [statsRes, intRes, eventsRes] = await Promise.allSettled([
-        getDecisionStats(),
+        getDecisionStats(activeWorkspace.workspace_id),
         getIntegrations(),
-        getEvents(undefined, 5),
+        getEvents(activeWorkspace.workspace_id, undefined, 5),
       ]);
 
       if (statsRes.status === "fulfilled") setStats(statsRes.value.data);
@@ -58,7 +61,7 @@ export default function DashboardHome() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeWorkspace]);
 
   useEffect(() => {
     fetchData();
