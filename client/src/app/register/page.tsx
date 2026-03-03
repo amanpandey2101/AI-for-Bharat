@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { register } from "@/services/auth";
 import { toast } from "sonner";
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
@@ -128,10 +129,7 @@ export default function RegisterPage() {
             className="w-full cursor-pointer"
             type="button"
             disabled={loading}
-            onClick={() => {
-              const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
-              window.location.href = `${baseUrl}/auth/github`;
-            }}
+            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
           >
             <Image
               src="/github.svg"
@@ -139,7 +137,6 @@ export default function RegisterPage() {
               width={20}
               height={20}
               className="mr-2"
-              
             />
             Sign up with GitHub
           </Button>

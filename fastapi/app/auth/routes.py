@@ -128,10 +128,17 @@ def login(data: LoginSchema):
 
         access_token = create_access_token(identity=user.id)
 
+        # Return token in body for cross-domain frontends that cannot rely on cookies
         response = JSONResponse(
             status_code=200,
-            content={"success": True, "message": "Login successful."},
+            content={
+                "success": True,
+                "message": "Login successful.",
+                "access_token": access_token,
+                "user_id": user.id,
+            },
         )
+        # Also set cookie for same-domain / same-site setups
         response.set_cookie(
             key=settings.JWT_ACCESS_COOKIE_NAME,
             value=access_token,
@@ -314,11 +321,14 @@ def github_callback(code: str = Query(None), state: str = Query(None)):
             UserRepository.create(user)
 
         jwt_token = create_access_token(identity=user.id)
-        
-        target_url = f"{settings.FRONTEND_URL.rstrip('/')}/dashboard"
-        logger.info(f"Login successful for {email}. Redirecting to {target_url}")
+
+        # For cross-domain setups (frontend on Amplify, backend on CloudFront/ALB),
+        # cookies cannot be set cross-site. Pass the token in the URL instead.
+        target_url = f"{settings.FRONTEND_URL.rstrip('/')}/dashboard?token={jwt_token}"
+        logger.info(f"Login successful for {email}. Redirecting to {target_url.split('?')[0]}")
 
         response = RedirectResponse(target_url)
+        # Also set cookie as fallback for same-site setups
         response.set_cookie(
             key=settings.JWT_ACCESS_COOKIE_NAME,
             value=jwt_token,
@@ -352,3 +362,67 @@ def get_me(user_id: str = Depends(get_current_user_id)):
         "name": user.name,
         "avatar_url": user.avatar_url,
     }
+
+
+# ── NextAuth GitHub Callback ─────────────────────────────────────────────────
+
+from pydantic import BaseModel
+
+class NextAuthGitHubCallback(BaseModel):
+    github_access_token: str
+
+@auth_router.post("/github/nextauth-callback")
+async def github_nextauth_callback(data: NextAuthGitHubCallback):
+    """
+    Called by NextAuth after GitHub OAuth.
+    Takes the GitHub access token, fetches user profile,
+    creates/updates user in DB, and returns a backend JWT.
+    """
+    try:
+        # Fetch GitHub user profile
+        headers = {"Authorization": f"Bearer {data.github_access_token}"}
+        gh_user = http_requests.get("https://api.github.com/user", headers=headers)
+        gh_user.raise_for_status()
+        gh_data = gh_user.json()
+
+        # Fetch primary email
+        gh_emails = http_requests.get("https://api.github.com/user/emails", headers=headers)
+        emails = gh_emails.json() if gh_emails.ok else []
+        primary = next((e for e in emails if e.get("primary") and e.get("verified")), None)
+        email = primary["email"] if primary else gh_data.get("email")
+
+        if not email:
+            return JSONResponse(status_code=400, content={"error": "No verified email from GitHub"})
+
+        name = gh_data.get("name") or gh_data.get("login", "GitHub User")
+        avatar_url = gh_data.get("avatar_url", "")
+
+        # Find or create user
+        user = UserRepository.get_by_email(email)
+        if not user:
+            user = UserModel(
+                email=email,
+                name=name,
+                provider="github",
+                avatar_url=avatar_url,
+                is_verified=True,
+            )
+            UserRepository.create(user)
+        
+        jwt_token = create_access_token(identity=user.id)
+        logger.info(f"[NextAuth] GitHub user synced: {email}")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "access_token": jwt_token,
+                "user_id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "avatar_url": user.avatar_url or "",
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"[NextAuth] GitHub callback error: {e}", exc_info=True)
+        return JSONResponse(status_code=500, content={"error": str(e)})

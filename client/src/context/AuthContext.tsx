@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { getMe } from "@/services/auth";
+import { createContext, useContext, useMemo } from "react";
+import { useSession } from "next-auth/react";
 
 type User = {
   id: string;
@@ -13,39 +13,37 @@ type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  refreshUser: () => Promise<void>;
+  accessToken: string | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  refreshUser: async () => {},
+  accessToken: null,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: session, status } = useSession();
 
-  const checkAuth = useCallback(async () => {
-    console.log("[Auth] 🔍 Checking session via /auth/me...");
-    try {
-      const data = await getMe();
-      console.log("[Auth] ✅ Session valid. User:", data.data);
-      setUser(data.data);
-    } catch (err) {
-      console.warn("[Auth] ⚠️ Session check failed (not logged in or cookie blocked):", err);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const value = useMemo(() => {
+    const loading = status === "loading";
+    const user = session?.user
+      ? {
+          id: (session.user as { id?: string }).id || "",
+          email: session.user.email || "",
+          name: session.user.name || "",
+          avatar_url: session.user.image || undefined,
+        }
+      : null;
+    const accessToken = (session as { accessToken?: string })?.accessToken || null;
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    console.log(`[Auth] status=${status}, user=${user?.email || "none"}, token=${accessToken ? "present" : "none"}`);
+
+    return { user, loading, accessToken };
+  }, [session, status]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser: checkAuth }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

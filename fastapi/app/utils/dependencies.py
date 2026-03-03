@@ -6,14 +6,31 @@ Migrated from SQLAlchemy to DynamoDB (UserRepository).
 
 from fastapi import Depends, HTTPException, status, Request
 import jwt
+import logging
 from app.config import settings
 from app.models.user import UserModel, UserRepository
 
+logger = logging.getLogger(__name__)
+
 
 def get_current_user_id(request: Request) -> str:
-    """Extract the user ID from the JWT cookie."""
-    token = request.cookies.get(settings.JWT_ACCESS_COOKIE_NAME)
+    """Extract the user ID from the JWT — checks Authorization header first, then cookie."""
+    token = None
+
+    # 1. Try Authorization: Bearer <token> header (works cross-domain, no cookie issues)
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1]
+        logger.info("[Auth] Token found in Authorization header")
+
+    # 2. Fall back to cookie (works when frontend/backend are same-site)
     if not token:
+        token = request.cookies.get(settings.JWT_ACCESS_COOKIE_NAME)
+        if token:
+            logger.info("[Auth] Token found in cookie")
+
+    if not token:
+        logger.warning("[Auth] No token found in header or cookie")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing access token",

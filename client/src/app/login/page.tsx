@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import {
   Card,
   CardContent,
@@ -13,18 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { login } from "@/services/auth";
-import { toast } from "sonner"
-
 
 export default function LoginPage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -33,23 +28,24 @@ export default function LoginPage() {
     console.log("[Login] 🔐 Submitting login for:", email);
 
     try {
-      const res = await login(email, password);
-      console.log("[Login] ✅ Login API responded:", res.data);
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-      if (res.data.success) {
-        console.log("[Login] 🍪 Login successful. Now verifying session cookie...");
-        await refreshUser();
-        console.log("[Login] 🚀 Session verified. Redirecting to /dashboard");
-        router.push("/dashboard");
+      console.log("[Login] NextAuth signIn result:", res);
+
+      if (res?.error) {
+        console.error("[Login] ❌ Error:", res.error);
+        toast(res.error);
       } else {
-        console.warn("[Login] ⚠️ Login returned success=false:", res.data);
-        toast(res.data.message || "Login failed.");
+        console.log("[Login] ✅ Login successful. Redirecting to /dashboard");
+        router.push("/dashboard");
       }
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
-      console.error("[Login] ❌ Login error:", err);
-      toast(message);
+      console.error("[Login] ❌ Exception:", err);
+      toast("Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
@@ -69,8 +65,6 @@ export default function LoginPage() {
 
         <CardContent className="space-y-4">
           <form onSubmit={handleLogin} className="space-y-4">
-            
-
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -118,16 +112,12 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* GitHub Login */}
           <Button
             variant="outline"
             className="w-full cursor-pointer"
             type="button"
             disabled={loading}
-            onClick={() => {
-              const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
-              window.location.href = `${baseUrl}/auth/github`;
-            }}
+            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
           >
             <Image
               src="/github.svg"
@@ -150,12 +140,11 @@ export default function LoginPage() {
           </p>
         </CardContent>
       </Card>
-
-      <div className="absolute -bottom-12 left-0 right-0 opacity-15 flex flex-row">
+      <div className=" fixed -bottom-12 left-0 right-0 opacity-15 flex flex-row">
         <Image src="/bara.svg" alt="bara" width={300} height={200} />
-        <Image src="/tm.svg" alt="tm" width={300} height={200} />
-        <Image src="/goi.svg" alt="goi" width={300} height={200} />
-        <Image src="/junction.svg" alt="junction" width={300} height={200} />
+        <Image src="/tm.svg" alt="bara" width={300} height={200} />
+        <Image src="/goi.svg" alt="bara" width={300} height={200} />
+        <Image src="/junction.svg" alt="bara" width={300} height={200} />
       </div>
     </div>
   );

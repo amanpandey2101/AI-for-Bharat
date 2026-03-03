@@ -10,15 +10,25 @@ import { ChatWidget } from "@/components/ChatWidget";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { setAccessToken } from "@/lib/axios";
 
 function DashboardGate({ children }: { children: React.ReactNode }) {
-  const { loading: authLoading, user } = useAuth();
+  const { loading: authLoading, user, accessToken } = useAuth();
   const { loading: wsLoading, needsOnboarding } = useWorkspace();
   const router = useRouter();
 
+  // Sync the backend access token to axios
+  useEffect(() => {
+    if (accessToken) {
+      setAccessToken(accessToken);
+      console.log("[DashboardGate] ✅ Backend access token synced to axios");
+    }
+  }, [accessToken]);
+
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      console.warn("[DashboardGate] ❌ Not authenticated. Redirecting to /login");
+      console.warn("[DashboardGate] Not authenticated. Redirecting to /login");
       router.replace("/login");
     }
   }, [authLoading, user, router]);
@@ -32,7 +42,6 @@ function DashboardGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    // Still rendering while redirect happens
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-6 h-6 animate-spin text-violet-600" />

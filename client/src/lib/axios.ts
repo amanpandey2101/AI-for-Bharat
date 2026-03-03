@@ -8,12 +8,22 @@ const api = axios.create({
     },
 });
 
+// Allow setting the access token externally (from NextAuth session)
+let _accessToken: string | null = null;
+
+export function setAccessToken(token: string | null) {
+    _accessToken = token;
+}
+
 api.interceptors.request.use(
     (config) => {
-        console.log(`[API] ➡️ ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
-            headers: config.headers,
-            withCredentials: config.withCredentials,
-        });
+        // Attach backend access token if available
+        if (_accessToken) {
+            config.headers["Authorization"] = `Bearer ${_accessToken}`;
+            console.log(`[API] ➡️ ${config.method?.toUpperCase()} ${config.url} (token attached)`);
+        } else {
+            console.log(`[API] ➡️ ${config.method?.toUpperCase()} ${config.url} (no token)`);
+        }
         return config;
     },
     (error) => {
@@ -24,22 +34,17 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
     (response) => {
-        console.log(`[API] ✅ ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+        console.log(`[API] ✅ ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
         return response;
     },
     (error) => {
         const status = error.response?.status;
         const url = error.config?.url;
-        const data = error.response?.data;
 
         console.error(`[API] ❌ ${status} ${error.config?.method?.toUpperCase()} ${url}`, {
-            data,
+            data: error.response?.data,
             message: error.message,
         });
-
-        if (status === 401) {
-            console.warn("[API] 🔒 401 Unauthorized — cookie may be missing or blocked by browser cross-site policy");
-        }
 
         return Promise.reject(error);
     }
