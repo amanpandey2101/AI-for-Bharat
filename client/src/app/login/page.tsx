@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   Card,
   CardContent,
@@ -19,6 +20,7 @@ import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,18 +29,26 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setLoading(true);
+    console.log("[Login] 🔐 Submitting login for:", email);
 
     try {
       const res = await login(email, password);
+      console.log("[Login] ✅ Login API responded:", res.data);
 
       if (res.data.success) {
+        console.log("[Login] 🍪 Login successful. Now verifying session cookie...");
+        await refreshUser();
+        console.log("[Login] 🚀 Session verified. Redirecting to /dashboard");
         router.push("/dashboard");
+      } else {
+        console.warn("[Login] ⚠️ Login returned success=false:", res.data);
+        toast(res.data.message || "Login failed.");
       }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong. Try again.";
+      console.error("[Login] ❌ Login error:", err);
       toast(message);
     } finally {
       setLoading(false);

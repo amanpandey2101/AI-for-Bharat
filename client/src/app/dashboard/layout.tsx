@@ -3,16 +3,36 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import "./home.css";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "@/context/WorkspaceContext";
 import { WorkspaceOnboarding } from "@/components/workspace-onboarding";
 import { ChatWidget } from "@/components/ChatWidget";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 function DashboardGate({ children }: { children: React.ReactNode }) {
-  const { loading, needsOnboarding } = useWorkspace();
+  const { loading: authLoading, user } = useAuth();
+  const { loading: wsLoading, needsOnboarding } = useWorkspace();
+  const router = useRouter();
 
-  if (loading) {
+  useEffect(() => {
+    if (!authLoading && !user) {
+      console.warn("[DashboardGate] ❌ Not authenticated. Redirecting to /login");
+      router.replace("/login");
+    }
+  }, [authLoading, user, router]);
+
+  if (authLoading || wsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-6 h-6 animate-spin text-violet-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    // Still rendering while redirect happens
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-6 h-6 animate-spin text-violet-600" />
