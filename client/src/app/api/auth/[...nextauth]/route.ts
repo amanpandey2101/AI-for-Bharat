@@ -6,13 +6,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5
 
 export const authOptions: NextAuthOptions = {
     providers: [
-        // ---------- GitHub OAuth ----------
         GithubProvider({
             clientId: process.env.GITHUB_CLIENT_ID!,
             clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         }),
-
-        // ---------- Email / Password  ----------
         CredentialsProvider({
             name: "Credentials",
             credentials: {
@@ -36,9 +33,8 @@ export const authOptions: NextAuthOptions = {
                         throw new Error(data.message || "Invalid credentials");
                     }
 
-                    // Return a user object — NextAuth will put this in the JWT
                     return {
-                        id: data.user_id || data.access_token, // backend should return user_id
+                        id: data.user_id || data.access_token, 
                         email: credentials?.email,
                         accessToken: data.access_token,
                     };
@@ -51,14 +47,11 @@ export const authOptions: NextAuthOptions = {
     ],
 
     callbacks: {
-        // ---------- JWT callback — runs on every token creation/refresh ----------
         async jwt({ token, user, account }) {
-            // On initial sign-in, persist extra info into the JWT
             if (user) {
                 token.accessToken = (user as { accessToken?: string }).accessToken;
             }
 
-            // For GitHub OAuth — register/login user in our FastAPI backend
             if (account?.provider === "github" && account.access_token) {
                 try {
                     const res = await fetch(`${API_BASE_URL}/auth/github/nextauth-callback`, {
@@ -85,7 +78,6 @@ export const authOptions: NextAuthOptions = {
             return token;
         },
 
-        // ---------- Session callback — what the client sees ----------
         async session({ session, token }) {
             if (session.user) {
                 (session as { accessToken?: string }).accessToken = token.accessToken as string;

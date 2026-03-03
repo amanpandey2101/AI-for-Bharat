@@ -20,28 +20,28 @@ api.interceptors.request.use(
         // Attach backend access token if available
         if (_accessToken) {
             config.headers["Authorization"] = `Bearer ${_accessToken}`;
-            console.log(`[API] ➡️ ${config.method?.toUpperCase()} ${config.url} (token attached)`);
+            console.log(`[API] ${config.method?.toUpperCase()} ${config.url} (token attached)`);
         } else {
-            console.log(`[API] ➡️ ${config.method?.toUpperCase()} ${config.url} (no token)`);
+            console.log(`[API] ${config.method?.toUpperCase()} ${config.url} (no token)`);
         }
         return config;
     },
     (error) => {
-        console.error("[API] ❌ Request setup error:", error);
+        console.error("[API]  Request setup error:", error);
         return Promise.reject(error);
     }
 );
 
 api.interceptors.response.use(
     (response) => {
-        console.log(`[API] ✅ ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+        console.log(`[API] ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
         return response;
     },
     (error) => {
         const status = error.response?.status;
         const url = error.config?.url;
 
-        console.error(`[API] ❌ ${status} ${error.config?.method?.toUpperCase()} ${url}`, {
+        console.error(`[API]₹ ${status} ${error.config?.method?.toUpperCase()} ${url}`, {
             data: error.response?.data,
             message: error.message,
         });

@@ -44,7 +44,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (err: unknown) {
-      console.error("[Login] ❌ Exception:", err);
+      console.error("[Login]  Exception:", err);
       toast("Something went wrong. Try again.");
     } finally {
       setLoading(false);
