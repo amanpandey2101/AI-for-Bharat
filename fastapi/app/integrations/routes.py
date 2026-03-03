@@ -78,6 +78,42 @@ def github_connect(user_id: str = Depends(get_current_user_id)):
     return RedirectResponse(GitHubService.get_oauth_url(state))
 
 
+class ConnectWithTokenRequest(BaseModel):
+    github_access_token: str
+
+
+@integration_router.post("/github/connect-with-token")
+def github_connect_with_token(
+    body: ConnectWithTokenRequest,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Connect GitHub using an existing GitHub access token (from NextAuth session).
+    No redirect needed — the frontend already has the GitHub token.
+    """
+    access_token = body.github_access_token
+    try:
+        gh_user = GitHubService.get_user_info(access_token)
+    except Exception as e:
+        logger.error(f"Failed to get GitHub user info: {e}")
+        raise HTTPException(status_code=400, detail="Invalid GitHub access token")
+
+    integration = IntegrationModel(
+        user_id=user_id,
+        platform="github",
+        access_token=access_token,
+        scopes=["repo", "admin:repo_hook", "read:org", "user:email"],
+        platform_user_id=str(gh_user.get("id", "")),
+        platform_username=gh_user.get("login"),
+    )
+    IntegrationRepository.save(integration)
+    logger.info(f"GitHub integration connected for user {user_id} via token")
+
+    return JSONResponse(
+        status_code=200,
+        content={"success": True, "message": "GitHub connected", "username": gh_user.get("login")},
+    )
+
+
 def handle_github_integration_callback(code: str, state: str):
     """Called from auth/routes.py when state starts with 'integration:'.
     Exchange code, save integration, redirect to frontend.

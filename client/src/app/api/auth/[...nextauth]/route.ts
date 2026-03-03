@@ -9,6 +9,12 @@ export const authOptions: NextAuthOptions = {
         GithubProvider({
             clientId: process.env.GITHUB_CLIENT_ID!,
             clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+            // Request wider scopes for repo + webhook management
+            authorization: {
+                params: {
+                    scope: "repo admin:repo_hook read:org user:email",
+                },
+            },
         }),
         CredentialsProvider({
             name: "Credentials",
@@ -34,7 +40,7 @@ export const authOptions: NextAuthOptions = {
                     }
 
                     return {
-                        id: data.user_id || data.access_token, 
+                        id: data.user_id || data.access_token,
                         email: credentials?.email,
                         accessToken: data.access_token,
                     };
@@ -52,7 +58,11 @@ export const authOptions: NextAuthOptions = {
                 token.accessToken = (user as { accessToken?: string }).accessToken;
             }
 
+            // For GitHub OAuth — sync user with backend and store both tokens
             if (account?.provider === "github" && account.access_token) {
+                // Store the GitHub access token for integration use
+                token.githubAccessToken = account.access_token;
+
                 try {
                     const res = await fetch(`${API_BASE_URL}/auth/github/nextauth-callback`, {
                         method: "POST",
@@ -81,6 +91,7 @@ export const authOptions: NextAuthOptions = {
         async session({ session, token }) {
             if (session.user) {
                 (session as { accessToken?: string }).accessToken = token.accessToken as string;
+                (session as { githubAccessToken?: string }).githubAccessToken = token.githubAccessToken as string;
                 session.user.name = token.name as string;
                 session.user.email = token.email as string;
                 session.user.image = token.picture as string;

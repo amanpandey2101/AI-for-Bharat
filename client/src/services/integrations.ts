@@ -40,6 +40,12 @@ export const getIntegrations = async () => {
     return api.get<{ integrations: Integration[] }>("/integrations/");
 };
 
+export const connectGitHubWithToken = async (githubAccessToken: string) => {
+    return api.post("/integrations/github/connect-with-token", {
+        github_access_token: githubAccessToken,
+    });
+};
+
 export const getGitHubRepos = async () => {
     return api.get<{ repos: Repo[] }>("/integrations/github/repos");
 };

@@ -10,20 +10,11 @@ import { ChatWidget } from "@/components/ChatWidget";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { setAccessToken } from "@/lib/axios";
 
 function DashboardGate({ children }: { children: React.ReactNode }) {
-  const { loading: authLoading, user, accessToken } = useAuth();
+  const { loading: authLoading, user } = useAuth();
   const { loading: wsLoading, needsOnboarding } = useWorkspace();
   const router = useRouter();
-
-  // Sync the backend access token to axios
-  useEffect(() => {
-    if (accessToken) {
-      setAccessToken(accessToken);
-      console.log("[DashboardGate] ✅ Backend access token synced to axios");
-    }
-  }, [accessToken]);
 
   // Redirect to login if not authenticated
   useEffect(() => {

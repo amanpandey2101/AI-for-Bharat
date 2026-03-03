@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { setAccessToken } from "@/lib/axios";
 
 type User = {
   id: string;
@@ -14,12 +15,14 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   accessToken: string | null;
+  githubAccessToken: string | null;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   accessToken: null,
+  githubAccessToken: null,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -36,10 +39,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       : null;
     const accessToken = (session as { accessToken?: string })?.accessToken || null;
+    const githubAccessToken = (session as { githubAccessToken?: string })?.githubAccessToken || null;
 
-    console.log(`[Auth] status=${status}, user=${user?.email || "none"}, token=${accessToken ? "present" : "none"}`);
+    // CRITICAL: Set token synchronously during render, BEFORE any child
+    // useEffects fire (like WorkspaceProvider's getWorkspaces call).
+    setAccessToken(accessToken);
 
-    return { user, loading, accessToken };
+    console.log(`[Auth] status=${status}, user=${user?.email || "none"}, token=${accessToken ? "present" : "none"}, ghToken=${githubAccessToken ? "present" : "none"}`);
+
+    return { user, loading, accessToken, githubAccessToken };
   }, [session, status]);
 
   return (

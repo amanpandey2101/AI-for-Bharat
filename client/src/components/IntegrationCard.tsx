@@ -86,8 +86,11 @@ interface IntegrationCardProps {
   integration: Integration | null;
   onDisconnect: (platform: string) => void;
   onManage: (platform: string) => void;
+  onConnect: (platform: string) => void;
   disconnecting: string | null;
+  connecting: string | null;
   accessToken?: string | null;
+  githubAccessToken?: string | null;
 }
 
 export default function IntegrationCard({
@@ -95,18 +98,23 @@ export default function IntegrationCard({
   integration,
   onDisconnect,
   onManage,
+  onConnect,
   disconnecting,
+  connecting,
   accessToken,
+  githubAccessToken,
 }: IntegrationCardProps) {
   const config = PLATFORM_CONFIG[platform];
   if (!config) return null;
 
   const isConnected = integration?.status === "active";
   const isDisconnecting = disconnecting === platform;
+  const isConnecting = connecting === platform;
+
+  const canConnectViaAPI = platform === "github" && !!githubAccessToken;
 
   return (
     <Card className="group relative overflow-hidden border border-border/50 hover:border-border hover:shadow-lg transition-all duration-300 cursor-default">
-      {/* Gradient accent bar */}
       <div
         className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.bgGradient} ${
           isConnected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
@@ -215,6 +223,22 @@ export default function IntegrationCard({
               </Button>
             </div>
           </div>
+        ) : canConnectViaAPI ? (
+          <Button
+            className="w-full mt-1 cursor-pointer"
+            type="button"
+            disabled={isConnecting}
+            onClick={() => onConnect(platform)}
+          >
+            {isConnecting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Connecting...
+              </>
+            ) : (
+              config.connectLabel
+            )}
+          </Button>
         ) : (
           <a
             href={`${API_BASE}/integrations/${platform}/connect${accessToken ? `?token=${accessToken}` : ""}`}

@@ -11,6 +11,7 @@ import { useWorkspace } from "@/context/WorkspaceContext";
 import {
   getIntegrations,
   disconnectPlatform,
+  connectGitHubWithToken,
   type Integration,
 } from "@/services/integrations";
 import { useAuth } from "@/context/AuthContext";
@@ -20,12 +21,13 @@ const PLATFORMS = ["github", "gitlab", "slack", "jira"] as const;
 function IntegrationsContent() {
   const searchParams = useSearchParams();
   const { activeWorkspace } = useWorkspace();
-  const { accessToken } = useAuth();
+  const { accessToken, githubAccessToken } = useAuth();
   const [integrations, setIntegrations] = useState<
     Record<string, Integration | null>
   >({});
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState<string | null>(null);
   const [managingPlatform, setManagingPlatform] = useState<string | null>(null);
 
   const fetchIntegrations = useCallback(async () => {
@@ -63,6 +65,23 @@ function IntegrationsContent() {
       fetchIntegrations();
     }
   }, [searchParams, fetchIntegrations]);
+
+  const handleConnect = async (platform: string) => {
+    if (platform === "github" && githubAccessToken) {
+      try {
+        setConnecting(platform);
+        await connectGitHubWithToken(githubAccessToken);
+        toast.success("GitHub connected successfully!", {
+          description: "You can now select repositories to monitor.",
+        });
+        await fetchIntegrations();
+      } catch {
+        toast.error("Failed to connect GitHub. Please try again.");
+      } finally {
+        setConnecting(null);
+      }
+    }
+  };
 
   const handleDisconnect = async (platform: string) => {
     try {
@@ -156,8 +175,11 @@ function IntegrationsContent() {
               integration={integrations[platform]}
               onDisconnect={handleDisconnect}
               onManage={handleManage}
+              onConnect={handleConnect}
               disconnecting={disconnecting}
+              connecting={connecting}
               accessToken={accessToken}
+              githubAccessToken={githubAccessToken}
             />
           ))}
         </div>
