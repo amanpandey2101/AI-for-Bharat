@@ -8,6 +8,12 @@ applications:
             - npm ci
         build:
           commands:
+            # Write server-side env vars into .env.production so NextAuth can read them at runtime
+            - echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.production
+            - echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.production
+            - echo "GITHUB_CLIENT_ID=$GITHUB_CLIENT_ID" >> .env.production
+            - echo "GITHUB_CLIENT_SECRET=$GITHUB_CLIENT_SECRET" >> .env.production
+            - echo "NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL" >> .env.production
             - npm run build
       artifacts:
         baseDirectory: .next
