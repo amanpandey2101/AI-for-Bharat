@@ -80,7 +80,6 @@ const PLATFORM_CONFIG: Record<string, PlatformConfig> = {
   },
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
 
 interface IntegrationCardProps {
   platform: string;

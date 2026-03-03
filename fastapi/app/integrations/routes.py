@@ -194,7 +194,7 @@ def gitlab_callback(code: str = Query(...), state: str = Query(...)):
         platform_username=gl_user.get("username"),
     )
     IntegrationRepository.save(integration)
-    return RedirectResponse(f"{settings.FRONTEND_URL}/integrations?connected=gitlab")
+    return RedirectResponse(f"{settings.FRONTEND_URL}/dashboard/integrations?connected=gitlab")
 
 
 @integration_router.get("/gitlab/repos")
@@ -270,7 +270,7 @@ def slack_callback(code: str = Query(...), state: str = Query(...)):
         platform_username=team.get("name"),
     )
     IntegrationRepository.save(integration)
-    return RedirectResponse(f"{settings.FRONTEND_URL}/integrations?connected=slack")
+    return RedirectResponse(f"{settings.FRONTEND_URL}/dashboard/integrations?connected=slack")
 
 
 @integration_router.get("/slack/channels")
@@ -337,7 +337,7 @@ def jira_callback(code: str = Query(...), state: str = Query(...)):
         platform_org=cloud_id,
     )
     IntegrationRepository.save(integration)
-    return RedirectResponse(f"{settings.FRONTEND_URL}/integrations?connected=jira")
+    return RedirectResponse(f"{settings.FRONTEND_URL}/dashboard/integrations?connected=jira")
 
 
 @integration_router.get("/jira/projects")

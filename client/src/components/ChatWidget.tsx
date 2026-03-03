@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { useAuth } from "@/context/AuthContext";
 import { sendMessageStream } from "@/services/chat";
 import { Brain, X, Send, Loader2, Minimize2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ type Message = {
 
 export function ChatWidget() {
   const { activeWorkspace } = useWorkspace();
+  const { accessToken } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -67,7 +69,7 @@ export function ChatWidget() {
     setLoading(true);
 
     try {
-      const res = await sendMessageStream(activeWorkspace.workspace_id, userMsg.content);
+      const res = await sendMessageStream(activeWorkspace.workspace_id, userMsg.content, null, accessToken);
       
       if (!res.body) throw new Error("No response body");
       

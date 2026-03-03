@@ -55,6 +55,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteWorkspace, updateWorkspace } from "@/services/workspaces";
+import { signOut } from "next-auth/react";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -319,7 +320,7 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => signOut({ callbackUrl: "/login" })}>
                       <LogOut color="red" /> Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>

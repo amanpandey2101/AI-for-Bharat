@@ -1,11 +1,6 @@
-import axios from "axios";
+import api from "@/lib/axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true,
-});
 
 export interface ADR {
     adr_id: string;
@@ -62,7 +57,8 @@ export const deleteADR = async (workspaceId: string, adrId: string) => {
     return api.delete(`/workspaces/${workspaceId}/adrs/${adrId}`);
 };
 
-export const exportADRUrl = (workspaceId: string, adrId: string) => {
-    // Return the direct URL for downloading the file by the browser
-    return `${API_BASE_URL}/workspaces/${workspaceId}/adrs/${adrId}/export`;
+export const exportADRUrl = (workspaceId: string, adrId: string, accessToken?: string | null) => {
+    // Return the direct URL with token for cross-domain auth
+    const tokenParam = accessToken ? `?token=${accessToken}` : "";
+    return `${API_BASE_URL}/workspaces/${workspaceId}/adrs/${adrId}/export${tokenParam}`;
 };

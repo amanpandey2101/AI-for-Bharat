@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { useAuth } from "@/context/AuthContext";
 import { getADR, exportADRUrl, type ADR, updateADR } from "@/services/adrs";
 import { toast } from "sonner";
 import {
@@ -33,6 +34,7 @@ export default function ADRDetailPage({
   const { adr_id } = use(params);
   const router = useRouter();
   const { activeWorkspace } = useWorkspace();
+  const { accessToken } = useAuth();
   const [adr, setAdr] = useState<ADR | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -132,7 +134,7 @@ export default function ADRDetailPage({
             </Select>
 
             <Button variant="outline" size="sm" asChild>
-              <a href={exportADRUrl(activeWorkspace.workspace_id, adr.adr_id)} download>
+              <a href={exportADRUrl(activeWorkspace.workspace_id, adr.adr_id, accessToken)} download>
                 <Download className="w-4 h-4 mr-2" />
                 Export MD
               </a>
