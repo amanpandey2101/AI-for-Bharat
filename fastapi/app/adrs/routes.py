@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 adr_router = APIRouter()
 
-# ── Request models ─────────────────────────────────────────────────────────────
 
 class CreateADRRequest(BaseModel):
     title: str

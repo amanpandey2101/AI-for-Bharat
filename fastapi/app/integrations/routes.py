@@ -169,9 +169,19 @@ def github_select_repos(body: SelectReposRequest, user_id: str = Depends(get_cur
 
     webhook_base = f"{settings.API_BASE_URL}/webhooks/github"
     results = []
+    newly_connected = []
 
     for i, repo_name in enumerate(body.resource_ids):
         display_name = body.resource_names[i] if i < len(body.resource_names) else repo_name
+
+        existing_resource = next((r for r in integration.resources if r.resource_id == repo_name), None)
+        if existing_resource:
+            results.append({
+                "repo": repo_name,
+                "webhook_registered": existing_resource.webhook_registered,
+                "status": "already_connected"
+            })
+            continue
 
         # Register webhook via GitHub API
         hook = GitHubService.register_webhook(
@@ -193,12 +203,13 @@ def github_select_repos(body: SelectReposRequest, user_id: str = Depends(get_cur
             "repo": repo_name,
             "webhook_registered": hook is not None,
         })
+        newly_connected.append(repo_name)
 
     IntegrationRepository.save(integration)
 
-    # Trigger background backfill for each connected repo
+    # Trigger background backfill for each newly connected repo
     import threading
-    for repo_name in body.resource_ids:
+    for repo_name in newly_connected:
         thread = threading.Thread(
             target=run_backfill_for_repo,
             args=(integration.access_token, repo_name, user_id, "github"),
@@ -206,7 +217,7 @@ def github_select_repos(body: SelectReposRequest, user_id: str = Depends(get_cur
         )
         thread.start()
 
-    return {"results": results, "backfill": "started"}
+    return {"results": results, "backfill": "started" if newly_connected else "none"}
 
 
 @integration_router.get("/github/repos/{repo_name:path}/backfill-status")
@@ -284,6 +295,12 @@ def gitlab_select_repos(body: SelectReposRequest, user_id: str = Depends(get_cur
 
     for i, project_id in enumerate(body.resource_ids):
         display_name = body.resource_names[i] if i < len(body.resource_names) else project_id
+        
+        existing_resource = next((r for r in integration.resources if r.resource_id == project_id), None)
+        if existing_resource:
+            results.append({"project": project_id, "webhook_registered": existing_resource.webhook_registered, "status": "already_connected"})
+            continue
+
         hook = GitLabService.register_webhook(
             access_token=integration.access_token,
             project_id=project_id,
@@ -357,8 +374,15 @@ def slack_select_channels(body: SelectReposRequest, user_id: str = Depends(get_c
     if not integration:
         raise HTTPException(status_code=404, detail="Slack not connected")
 
+    results = []
     for i, channel_id in enumerate(body.resource_ids):
         name = body.resource_names[i] if i < len(body.resource_names) else channel_id
+        
+        existing_resource = next((r for r in integration.resources if r.resource_id == channel_id), None)
+        if existing_resource:
+            results.append({"channel": channel_id, "monitored": True, "status": "already_connected"})
+            continue
+
         resource = ConnectedResource(
             resource_id=channel_id,
             resource_name=name,
@@ -366,9 +390,10 @@ def slack_select_channels(body: SelectReposRequest, user_id: str = Depends(get_c
             webhook_registered=True,  # Slack events flow automatically
         )
         integration.resources.append(resource)
+        results.append({"channel": channel_id, "monitored": True})
 
     IntegrationRepository.save(integration)
-    return {"results": [{"channel": c, "monitored": True} for c in body.resource_ids]}
+    return {"results": results}
 
 
 # ── Jira ───────────────────────────────────────────────────────────────────────
@@ -427,6 +452,12 @@ def jira_select_projects(body: SelectReposRequest, user_id: str = Depends(get_cu
 
     for i, project_key in enumerate(body.resource_ids):
         name = body.resource_names[i] if i < len(body.resource_names) else project_key
+        
+        existing_resource = next((r for r in integration.resources if r.resource_id == project_key), None)
+        if existing_resource:
+            results.append({"project": project_key, "webhook_registered": existing_resource.webhook_registered, "status": "already_connected"})
+            continue
+
         hook = JiraService.register_webhook(
             access_token=integration.access_token,
             cloud_id=integration.platform_org,
