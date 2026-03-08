@@ -318,7 +318,7 @@ const TextAnimateBase = ({
   ...props
 }: TextAnimateProps) => {
   // Use motion() to wrap the component or string tag
-  const MotionComponent = (motion as any)[Component as string] || motion(Component);
+  const MotionComponent = motion(Component as React.ElementType);
 
   let segments: string[] = []
   switch (by) {
