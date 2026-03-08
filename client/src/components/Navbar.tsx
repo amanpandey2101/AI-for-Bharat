@@ -1,9 +1,20 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { roboto } from "@/lib/font";
 import { Button } from "./ui/button";
 import Link from "next/link";
 
 function Navbar() {
+  const pathname = usePathname();
+  const isDashboard = pathname?.startsWith("/dashboard");
+  const isAuth = pathname?.startsWith("/login") || pathname?.startsWith("/register");
+
+  if (isDashboard || isAuth) {
+    return null;
+  }
+
   return (
     <div className="w-full flex justify-center fixed z-50 top-0 left-0 px-4 pointer-events-none">
       <nav

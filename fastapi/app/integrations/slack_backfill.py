@@ -76,8 +76,12 @@ class SlackBackfillService:
                 
             data = resp.json()
             if not data.get("ok"):
-                logger.error(f"[Slack Backfill] Slack API Error: {data.get('error')}")
-                break
+                error_code = data.get("error")
+                logger.error(f"[Slack Backfill] Slack API Error: {error_code}")
+                if error_code == "not_in_channel":
+                    raise Exception("The Memora bot is not in this channel. Please go to Slack, type '/invite @Memora' in this channel, and then reconnect it from the dashboard.")
+                else:
+                    raise Exception(f"Slack API error: {error_code}")
 
             batch = data.get("messages", [])
             if not batch:

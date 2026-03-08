@@ -379,9 +379,15 @@ def slack_select_channels(body: SelectReposRequest, user_id: str = Depends(get_c
     for i, channel_id in enumerate(body.resource_ids):
         name = body.resource_names[i] if i < len(body.resource_names) else channel_id
         
+        # Try to auto-join the channel
+        from app.integrations.slack_service import SlackService
+        SlackService.join_channel(integration.access_token, channel_id)
+
         existing_resource = next((r for r in integration.resources if r.resource_id == channel_id), None)
         if existing_resource:
             results.append({"channel": channel_id, "monitored": True, "status": "already_connected"})
+            if existing_resource.backfill_status != "in_progress":
+                newly_connected.append(channel_id)
             continue
 
         resource = ConnectedResource(

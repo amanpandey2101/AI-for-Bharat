@@ -18,7 +18,7 @@ SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access"
 SLACK_API_URL = "https://slack.com/api"
 
 
-SLACK_SCOPES = "channels:history,channels:read,groups:history,groups:read,chat:write,reactions:read,users:read,app_mentions:read"
+SLACK_SCOPES = "channels:history,channels:read,groups:history,groups:read,chat:write,reactions:read,users:read,app_mentions:read,channels:join"
 
 
 class SlackService:
@@ -82,6 +82,21 @@ class SlackService:
                 break
 
         return channels
+
+    @staticmethod
+    def join_channel(access_token: str, channel_id: str) -> bool:
+        """Attempt to auto-join a public channel, returning true if successful."""
+        response = http_requests.post(
+            f"{SLACK_API_URL}/conversations.join",
+            headers={"Authorization": f"Bearer {access_token}"},
+            json={"channel": channel_id},
+        )
+        data = response.json()
+        if not data.get("ok"):
+            logger.warning(f"Failed to auto-join Slack channel {channel_id}: {data.get('error')}")
+            return False
+        logger.info(f"Successfully auto-joined Slack channel {channel_id}")
+        return True
 
     @staticmethod
     def get_team_info(access_token: str) -> Optional[Dict]:
