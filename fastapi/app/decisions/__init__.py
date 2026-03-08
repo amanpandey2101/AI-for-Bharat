@@ -140,6 +140,11 @@ class DecisionEntity(BaseModel):
         item = _unconvert(item)
         item.pop("PK", None)
         item.pop("SK", None)
+        
+        # Add safe defaults for required fields to prevent ValidationErrors
+        item["title"] = item.get("title") or "Untitled Decision"
+        item["description"] = item.get("description") or "No description provided."
+        
         # Deserialize nested
         item["intent"] = [Evidence(**e) for e in item.get("intent", [])]
         item["execution"] = [Evidence(**e) for e in item.get("execution", [])]

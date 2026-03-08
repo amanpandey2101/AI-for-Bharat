@@ -220,7 +220,7 @@ def list_workspace_decisions(
                 "description": d.description,
                 "repository": d.repository,
                 "platform": d.platform,
-                "status": d.status,
+                "status": getattr(d.status, "value", d.status),
                 "confidence": d.confidence.overall,
                 "tags": d.tags,
                 "created_at": d.created_at,
@@ -326,9 +326,10 @@ def list_workspace_events(
                 "platform": e.platform.value,
                 "event_type": e.event_type.value,
                 "title": e.title,
-                "status": e.status.value,
+                "status": e.status.value if hasattr(e.status, "value") else str(e.status),
                 "timestamp": e.timestamp,
                 "author": e.author.name if e.author else None,
+                "repository": e.context.repository or e.context.project or e.context.channel or "",
             }
             for e in workspace_events
         ],
