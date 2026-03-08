@@ -8,6 +8,7 @@ export interface ActivityEvent {
     status: string;
     timestamp: string;
     author: string | null;
+    repository: string;
 }
 
 export const getEvents = async (

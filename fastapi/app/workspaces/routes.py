@@ -284,6 +284,7 @@ def workspace_decision_stats(
 @workspace_router.get("/{workspace_id}/events")
 def list_workspace_events(
     workspace_id: str,
+    platform: Optional[str] = Query(None),
     limit: int = Query(20, le=100),
     user_id: str = Depends(get_current_user_id),
 ):
@@ -305,7 +306,8 @@ def list_workspace_events(
     
     events = []
     # Collect events across platforms
-    for p in ["github", "gitlab", "slack", "jira"]:
+    platforms_to_fetch = [platform] if platform else ["github", "gitlab", "slack", "jira"]
+    for p in platforms_to_fetch:
         events.extend(EventRepository.list_by_platform(p, limit=limit))
     
     # Filter strictly to the workspace resources

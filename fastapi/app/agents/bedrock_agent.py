@@ -320,7 +320,7 @@ class BedrockAgentService:
 
         try:
             decision_id = decision.get("decision_id", str(uuid.uuid4()))
-            key = f"memora/decisions/{decision_id}.json"
+            key = f"decisions/{decision_id}.json"
 
             # Build a rich document for the KB to index
             document = {

@@ -199,6 +199,11 @@ export default function ActivityPage() {
                       <span className="px-1.5 py-0.5 bg-muted/80 rounded text-xs">
                         {formatEventType(event.event_type)}
                       </span>
+                      {event.repository && (
+                        <span className="font-medium text-blue-600">
+                          {event.repository}
+                        </span>
+                      )}
                       {event.author && (
                         <span className="font-medium">{event.author}</span>
                       )}

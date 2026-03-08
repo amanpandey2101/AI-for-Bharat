@@ -236,8 +236,12 @@ export default function DashboardHome() {
                     {event.platform}
                   </span>
                   <span className="text-sm truncate flex-1">
-                    {event.title ||
-                      event.event_type.replace(/_/g, " ")}
+                    {event.repository && (
+                      <span className="font-semibold text-blue-600 mr-2">
+                        {event.repository}:
+                      </span>
+                    )}
+                    {event.title || event.event_type.replace(/_/g, " ")}
                   </span>
                   {event.author && (
                     <span className="text-xs text-muted-foreground">
