@@ -231,7 +231,13 @@ class DecisionRepository:
             ScanIndexForward=False,
             Limit=limit,
         )
-        return [DecisionEntity.from_dynamo(i) for i in result.get("Items", [])]
+        decisions = []
+        for i in result.get("Items", []):
+            try:
+                decisions.append(DecisionEntity.from_dynamo(i))
+            except Exception:
+                logger.error(f"Failed to parse decision {i.get('PK')}", exc_info=True)
+        return decisions
 
     @staticmethod
     def list_by_status(status: str, limit: int = 50) -> List[DecisionEntity]:
@@ -242,7 +248,13 @@ class DecisionRepository:
             ScanIndexForward=False,
             Limit=limit,
         )
-        return [DecisionEntity.from_dynamo(i) for i in result.get("Items", [])]
+        decisions = []
+        for i in result.get("Items", []):
+            try:
+                decisions.append(DecisionEntity.from_dynamo(i))
+            except Exception:
+                logger.error(f"Failed to parse decision {i.get('PK')}", exc_info=True)
+        return decisions
 
     @staticmethod
     def list_recent(limit: int = 50) -> List[DecisionEntity]:
@@ -250,7 +262,12 @@ class DecisionRepository:
         items = result.get("Items", [])
         # Filter to only METADATA records
         metadata_items = [i for i in items if i.get("SK") == "METADATA"]
-        decisions = [DecisionEntity.from_dynamo(i) for i in metadata_items]
+        decisions = []
+        for i in metadata_items:
+            try:
+                decisions.append(DecisionEntity.from_dynamo(i))
+            except Exception:
+                logger.error(f"Failed to parse decision {i.get('PK')}", exc_info=True)
         decisions.sort(key=lambda d: d.created_at, reverse=True)
         return decisions[:limit]
 
