@@ -158,3 +158,103 @@ class GitHubService:
         except Exception:
             logger.error(f"Failed to delete webhook {hook_id}", exc_info=True)
             return False
+
+    @staticmethod
+    def create_adr_pr(
+        access_token: str,
+        repo_full_name: str,
+        decision: dict,
+    ) -> Optional[str]:
+        """Creates a PR with an ADR document for the validated decision."""
+        import base64
+        import re
+        import time
+
+        try:
+            # 1. Get default branch
+            repo_resp = http_requests.get(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            if repo_resp.status_code != 200:
+                logger.error(f"Failed to fetch repo {repo_full_name}")
+                return None
+            default_branch = repo_resp.json().get("default_branch", "main")
+
+            # 2. Get latest commit SHA
+            ref_resp = http_requests.get(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}/git/refs/heads/{default_branch}",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            if ref_resp.status_code != 200:
+                return None
+            sha = ref_resp.json().get("object", {}).get("sha")
+
+            # 3. Create new branch
+            branch_name = f"memora/adr-{int(time.time())}"
+            create_ref_resp = http_requests.post(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}/git/refs",
+                headers={"Authorization": f"Bearer {access_token}"},
+                json={"ref": f"refs/heads/{branch_name}", "sha": sha}
+            )
+            if create_ref_resp.status_code != 201:
+                return None
+
+            # 4. Generate Markdown content
+            safe_title = re.sub(r'[^a-zA-Z0-9]', '-', decision.get("title", "decision").lower())
+            file_path = f"docs/architecture/decisions/{int(time.time())}-{safe_title}.md"
+            
+            content = f"# {decision.get('title')}\n\n"
+            content += f"**Status:** Validated\n"
+            content += f"**Date:** {time.strftime('%Y-%m-%d')}\n\n"
+            content += "## Description\n"
+            content += f"{decision.get('description', '')}\n\n"
+            
+            if decision.get('rationale'):
+                content += "## Rationale\n"
+                content += f"{decision.get('rationale')}\n\n"
+                
+            if decision.get('alternatives_considered'):
+                content += "## Alternatives Considered\n"
+                for alt in decision.get('alternatives_considered'):
+                    content += f"- {alt}\n"
+                    
+            content_encoded = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+
+            # 5. Commit file
+            commit_resp = http_requests.put(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}/contents/{file_path}",
+                headers={"Authorization": f"Bearer {access_token}"},
+                json={
+                    "message": f"docs(adr): auto-generated ADR for '{decision.get('title')}'",
+                    "content": content_encoded,
+                    "branch": branch_name
+                }
+            )
+            if commit_resp.status_code not in (200, 201):
+                logger.error(f"Failed to commit file {commit_resp.text}")
+                return None
+                
+            # 6. Create PR
+            pr_resp = http_requests.post(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}/pulls",
+                headers={"Authorization": f"Bearer {access_token}"},
+                json={
+                    "title": f"docs(adr): {decision.get('title')}",
+                    "body": f"This ADR was automatically inferred from discussions and validated via Memora.\n\nDescription: {decision.get('description')}",
+                    "head": branch_name,
+                    "base": default_branch
+                }
+            )
+            
+            if pr_resp.status_code == 201:
+                pr_url = pr_resp.json().get("html_url")
+                logger.info(f"Successfully created ADR PR: {pr_url}")
+                return pr_url
+            else:
+                logger.error(f"Failed to create PR {pr_resp.text}")
+                return None
+                
+        except Exception:
+            logger.error("Error creating ADR PR via GitHub", exc_info=True)
+            return None

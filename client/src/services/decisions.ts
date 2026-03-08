@@ -21,6 +21,7 @@ export interface Decision {
     tags: string[];
     created_at: string;
     evidence_count: number;
+    alternatives_considered?: string[];
 }
 
 export interface DecisionDetail extends Decision {

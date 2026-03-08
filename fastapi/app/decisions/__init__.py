@@ -145,13 +145,23 @@ class DecisionEntity(BaseModel):
         item["title"] = item.get("title") or "Untitled Decision"
         item["description"] = item.get("description") or "No description provided."
         
+        if not item.get("confidence") or not isinstance(item["confidence"], dict):
+            item["confidence"] = {"overall": 0.5}
+        elif "overall" not in item["confidence"]:
+            item["confidence"]["overall"] = 0.5
+
         # Deserialize nested
         item["intent"] = [Evidence(**e) for e in item.get("intent", [])]
         item["execution"] = [Evidence(**e) for e in item.get("execution", [])]
         item["authority"] = [Evidence(**e) for e in item.get("authority", [])]
         item["outcomes"] = [Evidence(**e) for e in item.get("outcomes", [])]
-        if isinstance(item.get("confidence"), dict):
-            item["confidence"] = ConfidenceScore(**item["confidence"])
+        
+        item["confidence"] = ConfidenceScore(**item["confidence"])
+        
+        # Ensure status is a string before Pydantic validation if it needs mapping
+        if "status" in item and item["status"] is None:
+            item.pop("status")
+
         return cls(**item)
 
 

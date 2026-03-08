@@ -12,8 +12,6 @@ import {
   Archive,
   Clock,
   ChevronRight,
-  ThumbsUp,
-  ThumbsDown,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -97,6 +95,7 @@ export default function DecisionsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -246,7 +245,8 @@ export default function DecisionsPage() {
             return (
               <Card
                 key={d.decision_id}
-                className="hover:shadow-md transition-all group"
+                className={`transition-all group cursor-pointer ${expandedId === d.decision_id ? "ring-2 ring-primary/10 shadow-md" : "hover:shadow-md"}`}
+                onClick={() => setExpandedId(expandedId === d.decision_id ? null : d.decision_id)}
               >
                 <CardContent className="py-4 px-5">
                   <div className="flex items-start gap-4">
@@ -305,38 +305,69 @@ export default function DecisionsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
                       {d.status === "inferred" && (
-                        <>
+                        <div className="flex items-center gap-2">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() =>
-                              handleValidate(d.decision_id, "validated")
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleValidate(d.decision_id, "validated");
+                            }}
                             disabled={validatingId === d.decision_id}
-                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 cursor-pointer"
-                            title="Validate"
+                            className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800"
                           >
-                            <ThumbsUp className="w-4 h-4" />
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                            Validate
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() =>
-                              handleValidate(d.decision_id, "disputed")
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleValidate(d.decision_id, "disputed");
+                            }}
                             disabled={validatingId === d.decision_id}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                            title="Dispute"
+                            className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800"
                           >
-                            <ThumbsDown className="w-4 h-4" />
+                            <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                            Dispute
                           </Button>
-                        </>
+                        </div>
                       )}
-                      <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ChevronRight className={`w-5 h-5 ml-2 transition-transform text-muted-foreground ${expandedId === d.decision_id ? "rotate-90" : "opacity-0 group-hover:opacity-100"}`} />
                     </div>
                   </div>
+
+                  {/* Expanded Content */}
+                  {expandedId === d.decision_id && (
+                    <div className="mt-4 pt-4 border-t border-border pl-16 pr-4 animate-in slide-in-from-top-2 fade-in duration-200 text-sm">
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                          <Brain className="w-4 h-4 text-blue-500" />
+                          Rationale
+                        </h4>
+                        <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                          {d.rationale || "No rationale was explicitly captured for this decision."}
+                        </p>
+                      </div>
+                      
+                      {d.alternatives_considered && d.alternatives_considered.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-amber-500" />
+                            Alternatives Considered
+                          </h4>
+                          <ul className="list-disc list-outside ml-5 text-muted-foreground space-y-1">
+                            {d.alternatives_considered.map((alt, idx) => (
+                              <li key={idx} className="leading-relaxed">{alt}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );

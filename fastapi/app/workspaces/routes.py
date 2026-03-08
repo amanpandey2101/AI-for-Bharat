@@ -218,12 +218,17 @@ def list_workspace_decisions(
                 "decision_id": d.decision_id,
                 "title": d.title,
                 "description": d.description,
+                "rationale": d.rationale,
+                "alternatives_considered": d.alternatives_considered,
                 "repository": d.repository,
                 "platform": d.platform,
                 "status": getattr(d.status, "value", d.status),
                 "confidence": d.confidence.overall,
                 "tags": d.tags,
                 "created_at": d.created_at,
+                "evidence_count": (
+                    len(d.intent) + len(d.execution) + len(d.authority) + len(d.outcomes)
+                ),
             }
             for d in workspace_decisions
         ],

@@ -164,6 +164,28 @@ def validate_decision(
     DecisionRepository.update_status(decision_id, new_status)
 
     logger.info(f"Decision {decision_id} status updated to {new_status} by {user_id}")
+    
+    # Trigger ADR automation if validated and on a git platform
+    if new_status == DecisionStatus.VALIDATED and decision.platform == "github" and decision.repository:
+        # We need the user's Github access token
+        from app.integrations.models import IntegrationRepository
+        integration = IntegrationRepository.get(user_id, "github")
+        if integration and integration.access_token:
+            from app.integrations.github_service import GitHubService
+            import threading
+            
+            def _create_pr():
+                logger.info(f"Starting ADR PR automation for {decision_id}")
+                pr_url = GitHubService.create_adr_pr(
+                    access_token=integration.access_token,
+                    repo_full_name=decision.repository,
+                    decision=decision.model_dump(),
+                )
+                if pr_url:
+                    logger.info(f"ADR PR Success: {pr_url}")
+            
+            # Spin off PR creation so we don't block the UI request
+            threading.Thread(target=_create_pr).start()
 
     return {
         "decision_id": decision_id,
