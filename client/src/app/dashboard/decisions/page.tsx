@@ -327,7 +327,7 @@ export default function DecisionsPage() {
                               handleValidate(d.decision_id, "validated");
                             }}
                             disabled={validatingId === d.decision_id}
-                            className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800"
+                            className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 cursor-pointer"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                             Validate
@@ -340,7 +340,7 @@ export default function DecisionsPage() {
                               handleValidate(d.decision_id, "disputed");
                             }}
                             disabled={validatingId === d.decision_id}
-                            className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800"
+                            className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800 cursor-pointer"
                           >
                             <XCircle className="w-3.5 h-3.5 mr-1.5" />
                             Dispute
