@@ -494,6 +494,8 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
 
     # 5. Upload to S3 for Knowledge Base indexing
     decision_dict = decision.model_dump()
-    agent_service.upload_decision_to_kb(decision_dict)
+    if agent_service.upload_decision_to_kb(decision_dict):
+        # Trigger an async sync job so the KB picks up the new document
+        agent_service.sync_knowledge_base()
 
     return decision_dict
