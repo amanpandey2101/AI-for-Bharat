@@ -174,8 +174,10 @@ def validate_decision(
             from app.integrations.github_service import GitHubService
             import threading
             
-            def _create_pr():
-                logger.info(f"Starting ADR PR automation for {decision_id}")
+            def _create_pr_and_adr():
+                logger.info(f"Starting ADR automation for {decision_id}")
+                
+                # 1. Create Git PR
                 pr_url = GitHubService.create_adr_pr(
                     access_token=integration.access_token,
                     repo_full_name=decision.repository,
@@ -183,9 +185,38 @@ def validate_decision(
                 )
                 if pr_url:
                     logger.info(f"ADR PR Success: {pr_url}")
+
+                # 2. Sync to local ADR Dashboard (DynamoDB)
+                try:
+                    from app.workspaces import WorkspaceRepository
+                    from app.adrs import ADR, ADRRepository
+                    
+                    # Find which workspace owns this repository
+                    workspace = WorkspaceRepository.find_workspace_for_resource(
+                        owner_id=user_id,
+                        platform="github",
+                        resource_id=decision.repository
+                    )
+                    
+                    if workspace:
+                        adr = ADR(
+                            workspace_id=workspace.workspace_id,
+                            title=decision.title,
+                            context=decision.description,
+                            decision=decision.rationale,
+                            consequences="\n".join(decision.alternatives_considered),
+                            status="accepted",
+                            created_by=user_id
+                        )
+                        ADRRepository.save(adr)
+                        logger.info(f"Local ADR created for workspace {workspace.workspace_id}")
+                    else:
+                        logger.warning(f"No workspace found for repo {decision.repository} to create local ADR")
+                except Exception:
+                    logger.error("Failed to create local ADR record", exc_info=True)
             
-            # Spin off PR creation so we don't block the UI request
-            threading.Thread(target=_create_pr).start()
+            # Spin off automation so we don't block the UI request
+            threading.Thread(target=_create_pr_and_adr).start()
 
     return {
         "decision_id": decision_id,
