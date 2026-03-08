@@ -317,7 +317,8 @@ const TextAnimateBase = ({
   accessible = true,
   ...props
 }: TextAnimateProps) => {
-  const MotionComponent = motion.create(Component)
+  // Use motion() to wrap the component or string tag
+  const MotionComponent = (motion as any)[Component as string] || motion(Component);
 
   let segments: string[] = []
   switch (by) {
@@ -382,7 +383,7 @@ const TextAnimateBase = ({
       : { container: defaultContainerVariants, item: defaultItemVariants }
 
   return (
-    <AnimatePresence mode="popLayout">
+    <AnimatePresence>
       <MotionComponent
         variants={finalVariants.container as Variants}
         initial="hidden"
