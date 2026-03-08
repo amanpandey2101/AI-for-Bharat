@@ -96,6 +96,9 @@ export default function DecisionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [validatingId, setValidatingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalDecisions, setTotalDecisions] = useState(0);
+  const limit = 10;
 
   const fetchData = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -104,18 +107,26 @@ export default function DecisionsPage() {
       const [decisionsRes, statsRes] = await Promise.all([
         getDecisions(
           activeWorkspace.workspace_id,
-          statusFilter === "all" ? undefined : statusFilter
+          statusFilter === "all" ? undefined : statusFilter,
+          undefined,
+          limit,
+          (page - 1) * limit
         ),
         getDecisionStats(activeWorkspace.workspace_id),
       ]);
       setDecisions(decisionsRes.data.decisions);
+      setTotalDecisions(decisionsRes.data.total);
       setStats(statsRes.data);
     } catch {
       toast.error("Failed to load decisions");
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, activeWorkspace]);
+  }, [statusFilter, activeWorkspace, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchData();
@@ -372,6 +383,35 @@ export default function DecisionsPage() {
               </Card>
             );
           })}
+
+          {/* Pagination Controls */}
+          {!loading && totalDecisions > limit && (
+            <div className="flex items-center justify-between mt-6 px-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalDecisions)} of {totalDecisions} decisions
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="cursor-pointer"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page * limit >= totalDecisions}
+                  onClick={() => setPage(p => p + 1)}
+                  className="cursor-pointer"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

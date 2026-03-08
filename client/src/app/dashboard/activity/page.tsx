@@ -63,6 +63,9 @@ export default function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [totalEvents, setTotalEvents] = useState(0);
+  const limit = 20;
 
   const fetchEvents = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -70,15 +73,22 @@ export default function ActivityPage() {
       setLoading(true);
       const res = await getEvents(
         activeWorkspace.workspace_id,
-        platform === "all" ? undefined : platform
+        platform === "all" ? undefined : platform,
+        limit,
+        (page - 1) * limit
       );
       setEvents(res.data.events || []);
+      setTotalEvents(res.data.total || 0);
     } catch {
       toast.error("Failed to load activity");
     } finally {
       setLoading(false);
     }
-  }, [platform, activeWorkspace]);
+  }, [platform, activeWorkspace, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [platform]);
 
   useEffect(() => {
     fetchEvents();
@@ -217,6 +227,35 @@ export default function ActivityPage() {
               </CardContent>
             </Card>
           ))}
+
+          {/* Pagination Controls */}
+          {!loading && totalEvents > limit && (
+            <div className="flex items-center justify-between mt-6 px-2">
+              <p className="text-sm text-muted-foreground">
+                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalEvents)} of {totalEvents} events
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="cursor-pointer"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page * limit >= totalEvents}
+                  onClick={() => setPage(p => p + 1)}
+                  className="cursor-pointer"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

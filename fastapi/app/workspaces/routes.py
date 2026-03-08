@@ -182,6 +182,7 @@ def list_workspace_decisions(
     workspace_id: str,
     status: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
+    offset: int = Query(0, ge=0),
     user_id: str = Depends(get_current_user_id),
 ):
     """List decisions scoped to this workspace's resources."""
@@ -210,7 +211,10 @@ def list_workspace_decisions(
     workspace_decisions = [
         d for d in all_decisions
         if d.repository in resource_ids
-    ][:limit]
+    ]
+    
+    total = len(workspace_decisions)
+    paginated = workspace_decisions[offset : offset + limit]
 
     return {
         "decisions": [
@@ -230,9 +234,10 @@ def list_workspace_decisions(
                     len(d.intent) + len(d.execution) + len(d.authority) + len(d.outcomes)
                 ),
             }
-            for d in workspace_decisions
+            for d in paginated
         ],
-        "total": len(workspace_decisions),
+        "total": total,
+        "has_more": offset + limit < total,
         "workspace_id": workspace_id,
     }
 
@@ -286,6 +291,7 @@ def list_workspace_events(
     workspace_id: str,
     platform: Optional[str] = Query(None),
     limit: int = Query(20, le=100),
+    offset: int = Query(0, ge=0),
     user_id: str = Depends(get_current_user_id),
 ):
     """List recent ingestion events scoped to this workspace's resources."""
@@ -305,10 +311,12 @@ def list_workspace_events(
     resource_ids = {r.resource_id for r in ws.resources}
     
     events = []
-    # Collect events across platforms
+    # Collect events across platforms. We need enough to cover the offset chunk.
+    # In a truly scalable system this would be paginated with a LastEvaluatedKey.
+    fetch_limit = offset + limit
     platforms_to_fetch = [platform] if platform else ["github", "gitlab", "slack", "jira"]
     for p in platforms_to_fetch:
-        events.extend(EventRepository.list_by_platform(p, limit=limit))
+        events.extend(EventRepository.list_by_platform(p, limit=fetch_limit))
     
     # Filter strictly to the workspace resources
     workspace_events = []
@@ -323,10 +331,13 @@ def list_workspace_events(
             
     # Sort and paginate
     workspace_events.sort(key=lambda ev: ev.timestamp, reverse=True)
-    workspace_events = workspace_events[:limit]
+    total = len(workspace_events)
+    paginated = workspace_events[offset : offset + limit]
 
     return {
-        "count": len(workspace_events),
+        "count": len(paginated),
+        "total": total,
+        "has_more": offset + limit < total,
         "events": [
             {
                 "event_id": e.event_id,
@@ -338,7 +349,7 @@ def list_workspace_events(
                 "author": e.author.name if e.author else None,
                 "repository": e.context.repository or e.context.project or e.context.channel or "",
             }
-            for e in workspace_events
+            for e in paginated
         ],
         "workspace_id": workspace_id,
     }

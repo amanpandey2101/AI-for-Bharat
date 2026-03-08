@@ -14,9 +14,10 @@ export interface ActivityEvent {
 export const getEvents = async (
     workspaceId: string,
     platform?: string,
-    limit: number = 50
+    limit: number = 20,
+    offset: number = 0
 ) => {
-    const params: Record<string, string | number> = { limit };
-    if (platform) params.platform = platform;
-    return api.get<{ count: number; events: ActivityEvent[] }>(`/workspaces/${workspaceId}/events`, { params });
+    const params: Record<string, string | number> = { limit, offset };
+    if (platform && platform !== "all") params.platform = platform;
+    return api.get<{ count: number; total: number; has_more: boolean; events: ActivityEvent[] }>(`/workspaces/${workspaceId}/events`, { params });
 };

@@ -56,12 +56,13 @@ export const getDecisions = async (
     workspaceId: string,
     status?: string,
     repository?: string,
-    limit: number = 50
+    limit: number = 50,
+    offset: number = 0
 ) => {
-    const params: Record<string, string | number> = { limit };
-    if (status) params.status = status;
+    const params: Record<string, string | number> = { limit, offset };
+    if (status && status !== "all") params.status = status;
     if (repository) params.repository = repository;
-    return api.get<{ decisions: Decision[]; total: number }>(`/workspaces/${workspaceId}/decisions`, {
+    return api.get<{ decisions: Decision[]; total: number; has_more: boolean }>(`/workspaces/${workspaceId}/decisions`, {
         params,
     });
 };
