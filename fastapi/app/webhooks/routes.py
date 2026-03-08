@@ -87,7 +87,7 @@ async def _handle_webhook(platform: str, request: Request) -> JSONResponse:
 
     # 6. Fire-and-forget: run AI agent in background thread
     import threading
-    event_dict = _event_to_agent_dict(event)
+    event_dict = event.to_agent_dict()
     thread = threading.Thread(
         target=_process_event_with_agent,
         args=(event_dict, event.event_id),

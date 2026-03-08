@@ -24,6 +24,7 @@ from app.integrations.models import (
     IntegrationModel, IntegrationRepository, ConnectedResource,
 )
 from app.integrations.github_service import GitHubService
+from app.integrations.github_backfill import run_backfill_for_repo
 from app.integrations.gitlab_service import GitLabService
 from app.integrations.slack_service import SlackService
 from app.integrations.jira_service import JiraService
@@ -194,7 +195,37 @@ def github_select_repos(body: SelectReposRequest, user_id: str = Depends(get_cur
         })
 
     IntegrationRepository.save(integration)
-    return {"results": results}
+
+    # Trigger background backfill for each connected repo
+    import threading
+    for repo_name in body.resource_ids:
+        thread = threading.Thread(
+            target=run_backfill_for_repo,
+            args=(integration.access_token, repo_name, user_id, "github"),
+            daemon=True,
+        )
+        thread.start()
+
+    return {"results": results, "backfill": "started"}
+
+
+@integration_router.get("/github/repos/{repo_name:path}/backfill-status")
+def github_backfill_status(repo_name: str, user_id: str = Depends(get_current_user_id)):
+    """Check the backfill status for a connected GitHub repository."""
+    integration = IntegrationRepository.get(user_id, "github")
+    if not integration:
+        raise HTTPException(status_code=404, detail="GitHub not connected")
+    for r in integration.resources:
+        if r.resource_id == repo_name:
+            return {
+                "repo": repo_name,
+                "backfill_status": r.backfill_status,
+                "backfill_progress": r.backfill_progress,
+                "backfill_error": r.backfill_error,
+                "backfill_started_at": r.backfill_started_at,
+                "backfill_completed_at": r.backfill_completed_at,
+            }
+    raise HTTPException(status_code=404, detail="Repo not found in connected resources")
 
 
 # ── GitLab ─────────────────────────────────────────────────────────────────────

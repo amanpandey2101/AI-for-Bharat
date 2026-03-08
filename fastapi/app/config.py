@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     BEDROCK_KB_ID: str = ""
     BEDROCK_KB_S3_BUCKET: str = ""
 
+    # Backfill settings
+    BACKFILL_MAX_PRS: int = 200
+    BACKFILL_MAX_COMMITS: int = 200
+    BACKFILL_MAX_ISSUES: int = 200
+    BACKFILL_API_DELAY: float = 0.5
+    BACKFILL_RATE_LIMIT_THRESHOLD: int = 100
+
     DEBUG: bool = True
 
     model_config = SettingsConfigDict(

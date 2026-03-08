@@ -107,6 +107,20 @@ class IngestionEvent(BaseModel):
     raw_payload: Dict[str, Any] = Field(default_factory=dict)
     tags: List[str] = Field(default_factory=list)
 
+    def to_agent_dict(self) -> Dict[str, Any]:
+        """Convert to a flat dict for the AI agent."""
+        return {
+            "event_id": self.event_id,
+            "platform": self.platform.value,
+            "event_type": self.event_type.value,
+            "title": self.title or "",
+            "content": self.content or self.description or "",
+            "author_name": self.author.name if self.author else "unknown",
+            "repository": self.context.repository or self.context.project or self.context.channel or "",
+            "timestamp": self.timestamp,
+            "url": self.context.url or "",
+        }
+
     # DynamoDB key
     @property
     def pk(self) -> str:

@@ -91,10 +91,16 @@ def create_integrations_table():
 class ConnectedResource(BaseModel):
     """A repo, channel, or project the user has connected for monitoring."""
     resource_id: str           # e.g. repo full_name, channel ID, project key
-    resource_name: str         
+    resource_name: str
     resource_type: str = ""    # "repository", "channel", "project"
     webhook_registered: bool = False
     platform_webhook_id: Optional[str] = None  # ID returned by the platform API
+    # Backfill tracking
+    backfill_status: str = "none"  # none | pending | in_progress | completed | failed
+    backfill_progress: Optional[Dict[str, Any]] = None
+    backfill_error: Optional[str] = None
+    backfill_started_at: Optional[str] = None
+    backfill_completed_at: Optional[str] = None
 
 
 class IntegrationModel(BaseModel):
