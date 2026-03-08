@@ -18,7 +18,7 @@ SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access"
 SLACK_API_URL = "https://slack.com/api"
 
 
-SLACK_SCOPES = "channels:history,channels:read,groups:history,groups:read,chat:write,reactions:read,users:read"
+SLACK_SCOPES = "channels:history,channels:read,groups:history,groups:read,chat:write,reactions:read,users:read,app_mentions:read"
 
 
 class SlackService:
