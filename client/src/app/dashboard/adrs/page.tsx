@@ -163,7 +163,7 @@ export default function ADRsPage() {
           </p>
         </div>
 
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button onClick={() => setCreateOpen(true)} className="cursor-pointer">
           <Plus className="w-4 h-4 mr-2" />
           New Decision
         </Button>

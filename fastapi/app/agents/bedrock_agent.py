@@ -23,7 +23,6 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-# ── AWS Clients ────────────────────────────────────────────────────────────────
 
 def _get_aws_kwargs() -> Dict[str, str]:
     kwargs: Dict[str, str] = {"region_name": settings.AWS_REGION}
@@ -53,7 +52,6 @@ def get_bedrock_agent_client():
     return boto3.client("bedrock-agent", **_get_aws_kwargs())
 
 
-# ── PROMPTS ────────────────────────────────────────────────────────────────────
 
 DECISION_ANALYSIS_PROMPT = """Analyze this development workflow event and determine if it contains a technical or architectural decision.
 
@@ -101,8 +99,6 @@ Instructions:
 """
 
 
-# ── BEDROCK AGENT CLASS ───────────────────────────────────────────────────────
-
 class BedrockAgentService:
     """
     Manages interactions with Amazon Bedrock Agent + Knowledge Base.
@@ -141,7 +137,6 @@ class BedrockAgentService:
             self._bedrock_agent_client = get_bedrock_agent_client()
         return self._bedrock_agent_client
 
-    # ── Agent Invocation ───────────────────────────────────────────────────
 
     def invoke_agent(self, prompt: str, session_id: Optional[str] = None) -> Optional[str]:
         """
@@ -252,7 +247,6 @@ class BedrockAgentService:
             logger.error(f"Failed to parse JSON from agent response: {text[:200]}")
             return None
 
-    # ── Decision Inference ─────────────────────────────────────────────────
 
     def infer_decision(self, event_data: Dict) -> Optional[Dict]:
         """
@@ -265,7 +259,7 @@ class BedrockAgentService:
         response = self.invoke_agent(prompt)
         return self._parse_json_response(response)
 
-    # ── Semantic Search ────────────────────────────────────────────────────
+
 
     def search_decisions(self, question: str, session_id: Optional[str] = None) -> str:
         """
@@ -307,7 +301,6 @@ class BedrockAgentService:
             logger.error("KB retrieval failed", exc_info=True)
             return []
 
-    # ── Knowledge Base Sync ────────────────────────────────────────────────
 
     def upload_decision_to_kb(self, decision: Dict) -> bool:
         """
@@ -322,7 +315,7 @@ class BedrockAgentService:
             decision_id = decision.get("decision_id", str(uuid.uuid4()))
             key = f"decisions/{decision_id}.json"
 
-            # Build a rich document for the KB to index
+    
             document = {
                 "decision_id": decision_id,
                 "title": decision.get("title", ""),
@@ -365,7 +358,7 @@ class BedrockAgentService:
             return False
 
         try:
-            # List data sources for this KB
+           
             ds_response = self.bedrock_agent_client.list_data_sources(
                 knowledgeBaseId=kb_id
             )
@@ -375,7 +368,6 @@ class BedrockAgentService:
                 logger.warning("No data sources found for KB")
                 return False
 
-            # Start ingestion job for the first data source
             ds_id = data_sources[0]["dataSourceId"]
             self.bedrock_agent_client.start_ingestion_job(
                 knowledgeBaseId=kb_id,
@@ -402,12 +394,8 @@ class BedrockAgentService:
         return " | ".join(parts) if parts else "No evidence captured."
 
 
-# ── SINGLETON ──────────────────────────────────────────────────────────────────
-
 agent_service = BedrockAgentService()
 
-
-# ── EVENT PROCESSOR ────────────────────────────────────────────────────────────
 
 def process_event_for_decisions(event: Dict) -> Optional[Dict]:
     """
@@ -437,11 +425,12 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
             "comment": EvidenceType.PR_COMMENT,
             "issue_created": EvidenceType.JIRA_ISSUE,
             "issue_updated": EvidenceType.JIRA_ISSUE,
+            "message_sent": EvidenceType.SLACK_MESSAGE,
+            "thread_reply": EvidenceType.SLACK_MESSAGE,
             "message": EvidenceType.SLACK_MESSAGE,
         }
         return mapping.get(event_type, EvidenceType.PR_COMMENT)
 
-    # 1. Invoke agent
     result = agent_service.infer_decision(event)
     if not result or not result.get("is_decision"):
         logger.info(f"No decision found in event {event.get('event_id', 'unknown')}")
@@ -450,7 +439,7 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
     decision_data = result["decision"]
     confidence_factors = decision_data.get("confidence_factors", {})
 
-    # 2. Build evidence
+
     author = event.get("author", {})
     if isinstance(author, dict):
         author_name = author.get("name", "unknown")
@@ -467,7 +456,7 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
         url=event.get("url"),
     )
 
-    # 3. Create decision entity
+
     decision = DecisionEntity(
         title=decision_data.get("title", "Untitled Decision"),
         description=decision_data.get("description", ""),
@@ -488,14 +477,12 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
         source_event_ids=[event.get("event_id", "")],
     )
 
-    # 4. Save to DynamoDB
     DecisionRepository.save(decision)
     logger.info(f"Decision created: {decision.decision_id} — {decision.title} (confidence: {decision.confidence.overall})")
 
-    # 5. Upload to S3 for Knowledge Base indexing
+
     decision_dict = decision.model_dump()
     if agent_service.upload_decision_to_kb(decision_dict):
-        # Trigger an async sync job so the KB picks up the new document
         agent_service.sync_knowledge_base()
 
     return decision_dict

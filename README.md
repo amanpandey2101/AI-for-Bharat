@@ -31,6 +31,7 @@ Development teams make hundreds of architectural and design decisions daily acro
 | 📊 **Confidence Scoring** | Each decision scored on evidence quality, quantity, authority, and consistency |
 | 🔍 **Semantic Search (RAG)** | Ask "Why did we choose DynamoDB?" — agent searches Knowledge Base for answers |
 | ✅ **Human-in-the-Loop** | Validate or dispute AI-inferred decisions |
+| 📝 **ADR Automation** | Validated decisions automatically generate Pull Requests with standardized Markdown ADRs |
 | 📈 **Decision Dashboard** | Stats, activity feed, and decision memory at a glance |
 | 🧩 **Evidence Chains** | Each decision linked to source PRs, comments, commits, and messages |
 
@@ -130,6 +131,16 @@ Development teams make hundreds of architectural and design decisions daily acro
  │ Store Decision in DynamoDB      │
  │ Upload to S3 → Sync KB          │
  │ Decision visible in dashboard   │
+ └───────────────┬─────────────────┘
+                 │
+                 ▼
+ ┌─────────────────────────────────┐
+ │ 🔄 ADR Automation (on Validate) │
+ │                                 │
+ │ 1. Create new Git branch        │
+ │ 2. Generate Markdown ADR        │
+ │ 3. Commit to repository          │
+ │ 4. Open Pull Request            │
  └─────────────────────────────────┘
 ```
 
@@ -356,8 +367,21 @@ This sends a mock PR event through the full pipeline and verifies:
 | POST | `/decisions/search` | Semantic search via KB (RAG) |
 | GET | `/decisions/search/kb` | Direct KB vector search |
 | GET | `/decisions/{id}` | Get decision with evidence chain |
-| POST | `/decisions/{id}/validate` | Validate or dispute decision |
+| POST | `/decisions/{id}/validate` | Validate or dispute decision (triggers ADR PR) |
 | DELETE | `/decisions/{id}` | Delete decision |
+
+---
+
+## 📖 ADR Automation
+
+Memora bridges the gap between informal discussion and formal documentation. When an engineer clicks **"Validate"** on an inferred decision, our ADR engine orchestrates the entire documentation lifecycle:
+
+1. **Standardized Formatting:** Transforms the AI-extracted rationale, context, and alternatives into a clean Markdown ADR.
+2. **Automated Git Flow:** 
+   - Uses the GitHub API to create a unique branch (e.g., `adr/migrate-to-dynamodb`).
+   - Commits the ADR file to the repository's documentation directory (`docs/architecture/decisions/`).
+   - Opens a **Pull Request** back to the main branch for peer review.
+3. **Closing the Loop:** Once merged, the ADR becomes the permanent source of truth for the project's architecture.
 
 ---
 
@@ -423,11 +447,11 @@ Each decision's confidence is calculated from 4 factors:
 - [x] Semantic search ("Why did we choose X?")
 - [x] Dashboard with stats and activity feed
 - [x] Workspaces (group repos, channels, projects per project)
+- [x] Export decisions as ADR (Architecture Decision Records)
 - [ ] Knowledge Graph visualization (D3.js/React Flow)
 - [ ] Decision detail page with full evidence chain
 - [ ] Team collaboration features
 - [ ] Scheduled KB sync (CloudWatch Events)
-- [ ] Export decisions as ADR (Architecture Decision Records)
 - [ ] Slack bot for querying decisions inline
 
 ---
