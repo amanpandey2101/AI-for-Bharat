@@ -42,6 +42,28 @@ class SlackBackfillService:
         self.headers = {
             "Authorization": f"Bearer {access_token}",
         }
+        self.user_cache: Dict[str, str] = {}
+
+    def get_username(self, user_id: str) -> str:
+        if not user_id:
+            return "unknown"
+        if user_id in self.user_cache:
+            return self.user_cache[user_id]
+            
+        resp = self._get("users.info", {"user": user_id})
+        data = resp.json()
+        if data.get("ok"):
+            user_obj = data.get("user", {})
+            profile = user_obj.get("profile", {})
+            real_name = profile.get("real_name")
+            display_name = profile.get("display_name")
+            name = user_obj.get("name", user_id)
+            final_name = real_name or display_name or name
+            self.user_cache[user_id] = final_name
+            return final_name
+            
+        self.user_cache[user_id] = user_id
+        return user_id
 
     def _get(self, endpoint: str, params: Optional[Dict] = None) -> http_requests.Response:
         url = f"{SLACK_API_URL}/{endpoint}"
@@ -141,15 +163,16 @@ def _process_event_with_agent(event: IngestionEvent):
             pass
 
 
-def _create_event(platform_org: str, channel_id: str, message: Dict) -> IngestionEvent:
+def _create_event(platform_org: str, channel_id: str, channel_name: str, message: Dict, author_name: str) -> IngestionEvent:
     author = EventAuthor(
-        name=message.get("user", "unknown"),
-        username=message.get("user"),
-        platform_id=message.get("user"),
+        name=author_name,
+        username=message.get("user", "unknown"),
+        platform_id=message.get("user", "unknown"),
     )
 
     context = EventContext(
         channel=channel_id,
+        channel_name=channel_name,
         organisation=platform_org,
     )
 
@@ -167,7 +190,7 @@ def _create_event(platform_org: str, channel_id: str, message: Dict) -> Ingestio
     return IngestionEvent(
         platform=Platform.SLACK,
         event_type=event_type,
-        title=f"Slack message in #{channel_id}",
+        title=f"Slack message in #{channel_name}",
         content=text,
         context=context,
         author=author,
@@ -226,14 +249,18 @@ def run_backfill_for_channel(
         max_msgs = getattr(settings, "BACKFILL_MAX_SLACK_MESSAGES", 100)
         messages = service.fetch_channel_history(channel_id, max_messages=max_msgs)
         
+        channel_name = resource.resource_name or channel_id
         logger.info(f"[Slack Backfill] Found {len(messages)} recent messages")
 
         events_processed = 0
         threads_processed = 0
 
         for msg in messages:
+            msg_user_id = msg.get("user")
+            author_name = service.get_username(msg_user_id) if msg_user_id else "unknown"
+            
             # Create ingestion event for the main message
-            event = _create_event(platform_org, channel_id, msg)
+            event = _create_event(platform_org, channel_id, channel_name, msg, author_name)
             EventRepository.save(event)
             _process_event_with_agent(event)
             events_processed += 1
@@ -248,7 +275,9 @@ def run_backfill_for_channel(
                 # Processing individually:
                 for reply in replies:
                     if reply.get("subtype") not in ("bot_message",):
-                        reply_event = _create_event(platform_org, channel_id, reply)
+                        reply_user_id = reply.get("user")
+                        reply_author_name = service.get_username(reply_user_id) if reply_user_id else "unknown"
+                        reply_event = _create_event(platform_org, channel_id, channel_name, reply, reply_author_name)
                         EventRepository.save(reply_event)
                         _process_event_with_agent(reply_event)
                         events_processed += 1

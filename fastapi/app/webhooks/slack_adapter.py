@@ -88,24 +88,59 @@ class SlackAdapter(BaseWebhookAdapter):
         # Ignore bot messages to avoid loops
         if event.get("bot_id") or event.get("subtype") == "bot_message":
             return None
+            
+        channel_id = event.get("channel", "unknown")
+        user_id = event.get("user", "unknown")
+        
+        # Try to resolve real names dynamically
+        from app.integrations.models import IntegrationRepository
+        import requests
+        
+        channel_name = channel_id
+        author_name = user_id
+        
+        integration = IntegrationRepository.find_by_resource("slack", channel_id)
+        if integration:
+            # Resolve channel name from DB
+            for res in integration.resources:
+                if res.resource_id == channel_id and res.resource_name:
+                    channel_name = res.resource_name
+                    break
+                    
+            # Resolve user name from Slack API
+            if user_id != "unknown" and integration.access_token:
+                try:
+                    resp = requests.get(
+                        "https://slack.com/api/users.info", 
+                        headers={"Authorization": f"Bearer {integration.access_token}"}, 
+                        params={"user": user_id}
+                    )
+                    data = resp.json()
+                    if data.get("ok"):
+                        user_obj = data.get("user", {})
+                        p = user_obj.get("profile", {})
+                        author_name = p.get("real_name") or p.get("display_name") or user_obj.get("name") or user_id
+                except Exception as e:
+                    logger.warning(f"Failed to lookup slack user {user_id}: {e}")
 
         # Extract author
         author = EventAuthor(
-            name=event.get("user", "unknown"),
-            username=event.get("user"),
-            platform_id=event.get("user"),
+            name=author_name,
+            username=user_id,
+            platform_id=user_id,
         )
 
         # Extract context
         team = payload.get("team_id", "")
         context = EventContext(
-            channel=event.get("channel"),
+            channel=channel_id,
+            channel_name=channel_name,
             organisation=team,
         )
 
         # Extract content
         text = event.get("text", "")
-        title = f"Slack message in #{event.get('channel', 'unknown')}"
+        title = f"Slack message in #{channel_name}"
 
         return IngestionEvent(
             platform=Platform.SLACK,
