@@ -375,6 +375,7 @@ def slack_select_channels(body: SelectReposRequest, user_id: str = Depends(get_c
         raise HTTPException(status_code=404, detail="Slack not connected")
 
     results = []
+    newly_connected = []
     for i, channel_id in enumerate(body.resource_ids):
         name = body.resource_names[i] if i < len(body.resource_names) else channel_id
         
@@ -391,9 +392,22 @@ def slack_select_channels(body: SelectReposRequest, user_id: str = Depends(get_c
         )
         integration.resources.append(resource)
         results.append({"channel": channel_id, "monitored": True})
+        newly_connected.append(channel_id)
 
     IntegrationRepository.save(integration)
-    return {"results": results}
+
+    # Trigger background backfill for each newly connected channel
+    import threading
+    from app.integrations.slack_backfill import run_backfill_for_channel
+    for channel_id in newly_connected:
+        thread = threading.Thread(
+            target=run_backfill_for_channel,
+            args=(integration.access_token, channel_id, user_id),
+            daemon=True,
+        )
+        thread.start()
+
+    return {"results": results, "backfill": "started" if newly_connected else "none"}
 
 
 # ── Jira ───────────────────────────────────────────────────────────────────────
