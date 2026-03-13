@@ -6,7 +6,6 @@ import uvicorn
 import pydantic
 import fastapi_mail.config
 
-# Monkeypatching SecretStr into fastapi_mail to fix pydantic v2 compatibility bug in that version
 setattr(fastapi_mail.config, 'SecretStr', SecretStr)
 
 if __name__ == "__main__":

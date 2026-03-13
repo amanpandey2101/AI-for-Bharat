@@ -5,7 +5,6 @@
 Memora.dev is an AI-powered platform that automatically captures, analyzes, and organizes technical decisions made across your development workflow — PRs, code reviews, Slack discussions, Jira tickets — building a living knowledge base that answers *"Why did we build it this way?"*
 
 Built for the **AWS Hackathon 2026** using Amazon Bedrock Agents, Knowledge Base, DynamoDB, and more.
-
 ---
 
 ## 🎯 Problem Statement
@@ -86,6 +85,28 @@ Development teams make hundreds of architectural and design decisions daily acro
 │  └──────────────────┘                                       │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🎨 UI Walkthrough
+
+1. ![Landing hero](client/public/ui-images/landing.jpg)  
+   Hero banner that mirrors the pitch: highlights Memora.dev, decision memory benefits, and a clear CTA toward onboarding.
+
+2. ![Dashboard overview](client/public/ui-images/dashboard.jpg)  
+   Workspace dashboard showing KPIs, confidence scores, and quick access to recent decisions and ingestion health.
+
+3. ![Activity feed](client/public/ui-images/activity.jpg)  
+   Real-time stream of GitHub, Slack, Jira events that feed the Bedrock agent pipeline, complete with timestamps and status badges.
+
+4. ![Integrations manager](client/public/ui-images/Integrations.jpg)  
+   OAuth-ready gallery for GitHub, GitLab, Slack, and Jira connectors, reflecting the frontend's integration settings page.
+
+5. ![Chat-based decision view](client/public/ui-images/chat.jpg)  
+   Agent chat window that narrates each inferred decision, surfaces evidence, and captures validation before ADR creation.
+
+6. ![ADR detail screen](client/public/ui-images/adr2.jpg)  
+   ADR editor that formats extracted rationale, alternatives, and outcomes into a ready-to-commit Markdown record.
 
 ---
 
