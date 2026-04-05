@@ -59,7 +59,7 @@ function Hero() {
           by="word"
           className={cn("text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[0.9] text-black mb-6")}
         >
-          The Engineering Memory for High-Performance Teams.
+          We are archives
         </TextAnimate>
 
         <TextAnimate
