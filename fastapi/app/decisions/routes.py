@@ -136,20 +136,40 @@ def list_decisions(
 def get_graph_data(
     status: Optional[str] = Query(None),
     repository: Optional[str] = Query(None),
+    workspace_id: Optional[str] = Query(None),
     user_id: str = Depends(get_current_user_id),
 ):
     """
     Returns nodes and links for the interactive Knowledge Graph.
     """
     from app.decisions.graph_service import GraphService
+    from app.workspaces import WorkspaceRepository
     
     # Fetch results
     if repository:
-        decisions = DecisionRepository.list_by_repository(repository, 200)
-    elif status:
-        decisions = DecisionRepository.list_by_status(status, 200)
+        decisions = DecisionRepository.list_by_repository(repository, limit=100)
+    elif workspace_id:
+        # Strict Workspace Isolation
+        ws = WorkspaceRepository.get(workspace_id)
+        if not ws:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+        
+        resource_ids = [r.resource_id for r in ws.resources]
+        if resource_ids:
+            decisions = DecisionRepository.list_by_repositories(resource_ids, limit=200)
+        else:
+            decisions = []
     else:
-        decisions = DecisionRepository.list_recent(200)
+        # Fallback: All user's workspaces (privacy-aware)
+        workspaces = WorkspaceRepository.list_by_owner(user_id)
+        resource_ids = []
+        for ws in workspaces:
+            resource_ids.extend([r.resource_id for r in ws.resources])
+        
+        if resource_ids:
+            decisions = DecisionRepository.list_by_repositories(resource_ids, limit=200)
+        else:
+            decisions = []
 
     data = GraphService.build_graph(decisions)
     return data

@@ -282,6 +282,21 @@ class DecisionRepository:
         return decisions[:limit]
 
     @staticmethod
+    def list_by_repositories(repositories: List[str], limit: int = 200) -> List[DecisionEntity]:
+        """Perform batch queries for multiple repositories and merge results."""
+        decisions = []
+        # In a high-traffic system, we'd use BatchGetItem or parallel queries.
+        # For the hackathon, we query each repo sequentially up to the limit.
+        for repo in repositories:
+            if not repo: continue
+            repo_decisions = DecisionRepository.list_by_repository(repo, limit=limit // len(repositories) or 10)
+            decisions.extend(repo_decisions)
+        
+        # Sort by most recent across all repos
+        decisions.sort(key=lambda d: d.created_at, reverse=True)
+        return decisions[:limit]
+
+    @staticmethod
     def update_status(decision_id: str, status: DecisionStatus) -> None:
         DecisionRepository._table().update_item(
             Key={"PK": f"DECISION#{decision_id}", "SK": "METADATA"},
