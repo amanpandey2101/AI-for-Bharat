@@ -44,6 +44,20 @@ export default function KnowledgeGraphPage() {
         setLoading(true);
         const res = await api.get("/decisions/graph/data");
         setData(res.data);
+        
+        // --- Tune Physics (WOW Factor Tuning) ---
+        if (fgRef.current) {
+          const fg = fgRef.current;
+          // 1. Stronger repulsion to keep clusters airy
+          fg.d3Force('charge').strength(-400); 
+          // 2. Longer links to separate hub repositories from decisions
+          fg.d3Force('link').distance(80);
+          // 3. Collision force to strictly prevent overlapping nodes
+          const d3 = require('d3-force');
+          fg.d3Force('collide', d3.forceCollide(25));
+          // 4. Centering
+          fg.d3Force('center').strength(0.1);
+        }
       } catch (err) {
         console.error("Failed to fetch graph data", err);
       } finally {
@@ -70,7 +84,7 @@ export default function KnowledgeGraphPage() {
   }
 
   return (
-    <div className="relative w-full h-[calc(100vh-140px)] bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
+    <div className="relative w-full h-[calc(100vh-100px)] bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
        {/* Graph Container */}
        <div className="absolute inset-0 cursor-crosshair">
           <ForceGraph2D
@@ -113,8 +127,8 @@ export default function KnowledgeGraphPage() {
                      ctx.globalAlpha = 1.0;
                   }
 
-                  // Label
-                  if (globalScale > 1.2) {
+                  // Label - Only show when zoomed in for clarity
+                  if (globalScale > 2.2) {
                      ctx.fillStyle = '#64748b';
                      ctx.fillText(label, n.x, n.y + (n.val / 2) + 6/globalScale);
                   }

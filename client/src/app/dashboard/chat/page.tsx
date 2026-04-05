@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAuth } from "@/context/AuthContext";
-import { getChatSessions, getChatSession, sendMessageStream } from "@/services/chat";
-import { Brain, PlusCircle, MessageSquare, Loader2, Send } from "lucide-react";
+import { getChatSessions, getChatSession, deleteChatSession, sendMessageStream } from "@/services/chat";
+import { Brain, PlusCircle, MessageSquare, Loader2, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -164,6 +164,24 @@ export default function FullChatPage() {
     }
   };
 
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    if (!activeWorkspace) return;
+    
+    if (!confirm("Are you sure you want to delete this chat?")) return;
+
+    try {
+      await deleteChatSession(activeWorkspace.workspace_id, sessionId);
+      if (activeSessionId === sessionId) {
+        setActiveSessionId(null);
+        setMessages([]);
+      }
+      fetchSessions();
+    } catch (err) {
+      console.error("Failed to delete chat session:", err);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -197,19 +215,28 @@ export default function FullChatPage() {
             </div>
           ) : (
             sessions.map((s) => (
-              <button
-                key={s.session_id}
-                onClick={() => setActiveSessionId(s.session_id)}
-                className={cn(
-                  "w-full flex items-center gap-3 p-3 text-sm rounded-lg transition-colors text-left truncate cursor-pointer",
-                  activeSessionId === s.session_id 
-                    ? "bg-violet-100 text-violet-900 font-medium" 
-                    : "hover:bg-muted/50 text-foreground"
-                )}
-              >
-                <MessageSquare className="w-4 h-4 shrink-0 opacity-70" />
-                <span className="truncate">{s.title}</span>
-              </button>
+              <div key={s.session_id} className="group relative">
+                <button
+                  onClick={() => setActiveSessionId(s.session_id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 pr-10 text-sm rounded-lg transition-colors text-left truncate cursor-pointer",
+                    activeSessionId === s.session_id 
+                      ? "bg-violet-100 text-violet-900 font-medium" 
+                      : "hover:bg-muted/50 text-foreground"
+                  )}
+                >
+                  <MessageSquare className="w-4 h-4 shrink-0 opacity-70" />
+                  <span className="truncate">{s.title}</span>
+                </button>
+                
+                <button
+                  onClick={(e) => handleDeleteSession(e, s.session_id)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                  title="Delete chat"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             ))
           )}
         </div>
