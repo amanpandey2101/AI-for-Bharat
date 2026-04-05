@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import * as d3 from "d3-force";
+import { forceCollide } from "d3-force";
 import api from "@/lib/axios";
 import { Brain, Loader2, X } from "lucide-react";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -54,7 +54,7 @@ export default function KnowledgeGraphPage() {
           // 2. Longer links to separate hub repositories from decisions
           fg.d3Force('link').distance(80);
           // 3. Collision force to strictly prevent overlapping nodes
-          fg.d3Force('collide', d3.forceCollide(25));
+          fg.d3Force('collide', forceCollide(25));
           // 4. Centering
           fg.d3Force('center').strength(0.1);
         }
