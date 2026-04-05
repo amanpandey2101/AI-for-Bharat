@@ -13,7 +13,7 @@ const features = [
   },
   {
     title: "Zero-Cost Heuristics",
-    description: "Our Smart Heuristic Filter removes 95% of 'Hello' noise before it touches expensive LLM endpoints. Frugal engineering for the 2026 enterprise.",
+    description: "Our Smart Heuristic Filter removes 95% of &apos;Hello&apos; noise before it touches expensive LLM endpoints. Frugal engineering for the 2026 enterprise.",
     icon: Zap,
     color: "bg-amber-500/10 text-amber-600",
     className: "md:col-span-1",
@@ -58,7 +58,7 @@ export function Features() {
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Stop losing vital architectural context in the noise of fast-paced development. 
-            Memora captures every 'Why' as it happens.
+            Memora captures every &apos;Why&apos; as it happens.
           </p>
         </div>
 

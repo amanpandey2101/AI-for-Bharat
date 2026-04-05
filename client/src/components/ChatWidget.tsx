@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAuth } from "@/context/AuthContext";
 import { sendMessageStream } from "@/services/chat";
-import { Brain, X, Send, Loader2, Minimize2, Maximize2 } from "lucide-react";
+import { Brain, X, Send, Loader2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
