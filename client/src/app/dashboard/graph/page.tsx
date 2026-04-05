@@ -42,7 +42,7 @@ export default function KnowledgeGraphPage() {
       // For Demo: if no workspace selected, or even if it is, we fetch the recent decisions to build a graph
       try {
         setLoading(true);
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/decisions/graph/data`);
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'}/decisions/graph/data`);
         setData(res.data);
       } catch (err) {
         console.error("Failed to fetch graph data", err);
