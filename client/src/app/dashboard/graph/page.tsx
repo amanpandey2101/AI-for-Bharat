@@ -41,32 +41,37 @@ export default function KnowledgeGraphPage() {
   const fgRef = useRef<any>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      // For Demo: if no workspace selected, or even if it is, we fetch the recent decisions to build a graph
+    const fetchGraph = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const res = await api.get("/decisions/graph/data");
+        const workspaceId = activeWorkspace?.workspace_id;
+        const res = await api.get("/decisions/graph/data", {
+           params: { workspace_id: workspaceId }
+        });
         setData(res.data);
         
         // --- Tune Physics (WOW Factor Tuning) ---
         if (fgRef.current) {
           const fg = fgRef.current;
-          // 1. Moderate repulsion (less explosive/shaky)
           fg.d3Force('charge').strength(-200); 
-          // 2. Clear link lengths
           fg.d3Force('link').distance(80);
-          // 3. Keep nodes from overlapping
           fg.d3Force('collide', forceCollide(20));
-          // 4. Centering
           fg.d3Force('center').strength(0.1);
+
+          // Reheat simulation after data loads to prevent "clumped nodes" bug
+          setTimeout(() => {
+             fg.d3ReheatSimulation();
+             fg.zoomToFit(600, 100);
+          }, 300);
         }
       } catch (err) {
-        console.error("Failed to fetch graph data", err);
+        console.error("Failed to load graph:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchGraph();
   }, [activeWorkspace]);
 
   const handleNodeClick = (node: object) => {
