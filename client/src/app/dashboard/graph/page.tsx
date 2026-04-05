@@ -205,7 +205,7 @@ export default function KnowledgeGraphPage() {
                              <div className="w-2 h-2 rounded-full bg-blue-500" />
                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Slack Source</span>
                           </div>
-                          <p className="text-xs italic text-gray-600 mb-2">"Wait, if we use SQS here, we can actually skip the Step Functions orchestration..."</p>
+                          <p className="text-xs italic text-gray-600 mb-2">&ldquo;Wait, if we use SQS here, we can actually skip the Step Functions orchestration...&rdquo;</p>
                           <div className="text-[10px] text-gray-400">#architecture-internal • 2d ago</div>
                        </div>
 
