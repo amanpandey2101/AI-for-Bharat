@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAuth } from "@/context/AuthContext";
 import { getChatSessions, getChatSession, sendMessageStream } from "@/services/chat";
-import { Brain, Search, PlusCircle, MessageSquare, Loader2, Send } from "lucide-react";
+import { Brain, PlusCircle, MessageSquare, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ export default function FullChatPage() {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     if (!activeWorkspace) return;
     try {
       const data = await getChatSessions(activeWorkspace.workspace_id);
@@ -42,11 +42,11 @@ export default function FullChatPage() {
     } catch (e) {
       console.error("Failed to fetch chat sessions:", e);
     }
-  };
+  }, [activeWorkspace]);
 
   useEffect(() => {
     fetchSessions();
-  }, [activeWorkspace]);
+  }, [fetchSessions]);
 
   useEffect(() => {
     // If no active session, wait for user to select or start new

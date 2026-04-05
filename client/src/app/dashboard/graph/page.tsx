@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import axios from "axios";
-import { Brain, Loader2, X, Info } from "lucide-react";
+import { Brain, Loader2, X } from "lucide-react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { Button } from "@/components/ui/button";
 
@@ -15,11 +15,26 @@ const NODE_COLORS: Record<string, string> = {
   repository: "#8b5cf6",        // violet-500
 };
 
+interface GraphNode {
+  id: string;
+  name: string;
+  type: "decision" | "author" | "repository";
+  status?: string;
+  val: number;
+  description?: string;
+  tags?: string[];
+  confidence?: number;
+  x?: number;
+  y?: number;
+  color?: string;
+}
+
 export default function KnowledgeGraphPage() {
   const { activeWorkspace } = useWorkspace();
   const [data, setData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
-  const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fgRef = useRef<any>(null);
 
   useEffect(() => {
@@ -38,9 +53,10 @@ export default function KnowledgeGraphPage() {
     fetchData();
   }, [activeWorkspace]);
 
-  const handleNodeClick = (node: any) => {
-    if (node.type === "decision") {
-       setSelectedNode(node);
+  const handleNodeClick = (node: object) => {
+    const graphNode = node as GraphNode;
+    if (graphNode.type === "decision") {
+       setSelectedNode(graphNode);
     }
   };
 
@@ -60,41 +76,48 @@ export default function KnowledgeGraphPage() {
           <ForceGraph2D
             ref={fgRef}
             graphData={data}
-            nodeLabel={(node: any) => `${node.type.toUpperCase()}: ${node.name}`}
-            nodeColor={(node: any) => {
-               if (node.type === "decision") return NODE_COLORS[`decision_${node.status}`] || NODE_COLORS.decision_inferred;
-               return NODE_COLORS[node.type];
+            nodeLabel={(node: object) => {
+               const n = node as GraphNode;
+               return `${n.type.toUpperCase()}: ${n.name}`;
+            }}
+            nodeColor={(node: object) => {
+               const n = node as GraphNode;
+               if (n.type === "decision") return NODE_COLORS[`decision_${n.status}`] || NODE_COLORS.decision_inferred;
+               return NODE_COLORS[n.type];
             }}
             nodeRelSize={6}
-            nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-               const label = node.name;
+            nodeCanvasObject={(node: object, ctx: CanvasRenderingContext2D, globalScale: number) => {
+               const n = node as GraphNode;
+               const label = n.name;
                const fontSize = 12/globalScale;
                ctx.font = `${fontSize}px Inter, sans-serif`;
                ctx.textAlign = 'center';
                ctx.textBaseline = 'middle';
                
                // Draw Node Circle
-               ctx.fillStyle = node.type === "decision" 
-                  ? (NODE_COLORS[`decision_${node.status}`] || NODE_COLORS.decision_inferred)
-                  : NODE_COLORS[node.type];
+               ctx.fillStyle = n.type === "decision" 
+                  ? (NODE_COLORS[`decision_${n.status}`] || NODE_COLORS.decision_inferred)
+                  : NODE_COLORS[n.type];
                   
-               ctx.beginPath(); 
-               ctx.arc(node.x, node.y, node.val / 2, 0, 2 * Math.PI, false); 
-               ctx.fill();
+               if (n.x !== undefined && n.y !== undefined) {
+                  ctx.beginPath(); 
+                  ctx.arc(n.x, n.y, n.val / 2, 0, 2 * Math.PI, false); 
+                  ctx.fill();
 
-               // Add visual glow for decisions
-               if (node.type === "decision") {
-                  ctx.strokeStyle = ctx.fillStyle;
-                  ctx.globalAlpha = 0.2;
-                  ctx.lineWidth = 4/globalScale;
-                  ctx.stroke();
-                  ctx.globalAlpha = 1.0;
-               }
+                  // Add visual glow for decisions
+                  if (n.type === "decision") {
+                     ctx.strokeStyle = ctx.fillStyle;
+                     ctx.globalAlpha = 0.2;
+                     ctx.lineWidth = 4/globalScale;
+                     ctx.stroke();
+                     ctx.globalAlpha = 1.0;
+                  }
 
-               // Label
-               if (globalScale > 1.2) {
-                  ctx.fillStyle = '#64748b';
-                  ctx.fillText(label, node.x, node.y + (node.val / 2) + 6/globalScale);
+                  // Label
+                  if (globalScale > 1.2) {
+                     ctx.fillStyle = '#64748b';
+                     ctx.fillText(label, n.x, n.y + (n.val / 2) + 6/globalScale);
+                  }
                }
             }}
             linkDirectionalArrowLength={3}
@@ -161,18 +184,18 @@ export default function KnowledgeGraphPage() {
                    <div className="pt-6 border-t border-gray-100">
                       <div className="flex justify-between items-end mb-3">
                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Inference Confidence</p>
-                         <span className="text-sm font-bold text-emerald-600">{(selectedNode.confidence * 100).toFixed(0)}%</span>
+                         <span className="text-sm font-bold text-emerald-600">{(selectedNode.confidence ?? 0) * 100}%</span>
                       </div>
                       <div className="w-full h-2 bg-gray-50 rounded-full overflow-hidden border border-gray-100">
-                         <div className="h-full bg-emerald-500" style={{ width: `${selectedNode.confidence * 100}%` }} />
+                         <div className="h-full bg-emerald-500" style={{ width: `${(selectedNode.confidence ?? 0) * 100}%` }} />
                       </div>
                    </div>
 
-                   {selectedNode.tags?.length > 0 && (
+                   {(selectedNode.tags?.length ?? 0) > 0 && (
                       <div className="pt-6 border-t border-gray-100">
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Tags & Classification</p>
                         <div className="flex flex-wrap gap-2">
-                           {selectedNode.tags.map((t: string) => (
+                           {selectedNode.tags?.map((t: string) => (
                               <span key={t} className="px-3 py-1 bg-violet-50 text-violet-600 rounded-lg text-[10px] font-bold border border-violet-100/50">
                                  {t}
                               </span>
