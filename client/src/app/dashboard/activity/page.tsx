@@ -189,22 +189,28 @@ export default function ActivityPage() {
 
            
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">
-                        {event.title || formatEventType(event.event_type)}
+                    <div className="flex items-center justify-between gap-4 mb-1">
+                      <span className="font-bold text-gray-900 truncate text-base group-hover:text-primary transition-colors">
+                        {event.title}
                       </span>
                       <span
-                        className={`text-xs px-1.5 py-0.5 rounded ${
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${
                           event.status === "processed"
-                            ? "bg-emerald-50 text-emerald-600"
+                            ? "bg-emerald-100 text-emerald-700"
                             : event.status === "failed"
-                            ? "bg-red-50 text-red-600"
-                            : "bg-amber-50 text-amber-600"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
                         }`}
                       >
                         {event.status}
                       </span>
                     </div>
+                    
+                    {event.description && (
+                      <p className="text-sm text-gray-500 line-clamp-1 mb-2">
+                        {event.description}
+                      </p>
+                    )}
                     <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                       <span className="px-1.5 py-0.5 bg-muted/80 rounded text-xs">
                         {formatEventType(event.event_type)}

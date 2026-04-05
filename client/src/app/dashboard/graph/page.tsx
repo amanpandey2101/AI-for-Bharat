@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import ForceGraph2D from "react-force-graph-2d";
 import { forceCollide } from "d3-force";
 import api from "@/lib/axios";
-import { Brain, Loader2, X } from "lucide-react";
+import { Brain, Loader2, X, CheckCircle2 } from "lucide-react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { Button } from "@/components/ui/button";
 
@@ -36,6 +36,7 @@ export default function KnowledgeGraphPage() {
   const [data, setData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [showEvidence, setShowEvidence] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fgRef = useRef<any>(null);
 
@@ -72,6 +73,7 @@ export default function KnowledgeGraphPage() {
     const graphNode = node as GraphNode;
     if (graphNode.type === "decision") {
        setSelectedNode(graphNode);
+       setShowEvidence(false);
     }
   };
 
@@ -162,9 +164,13 @@ export default function KnowledgeGraphPage() {
                  <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                  Validated Decisions
               </div>
-               <div className="flex items-center gap-3 text-xs font-semibold text-gray-700">
+              <div className="flex items-center gap-3 text-xs font-semibold text-gray-700">
                  <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
                  Inferred Context
+              </div>
+              <div className="flex items-center gap-3 text-xs font-semibold text-gray-700">
+                 <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                 Disputed Decisions
               </div>
            </div>
        </div>
@@ -177,12 +183,53 @@ export default function KnowledgeGraphPage() {
                    <div className="p-3 rounded-2xl bg-blue-50/50">
                       <Brain className="w-6 h-6 text-blue-600" />
                    </div>
-                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => setSelectedNode(null)}>
+                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => { setSelectedNode(null); setShowEvidence(false); }}>
                       <X className="w-4 h-4" />
                    </Button>
                 </div>
                 
-                <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{selectedNode.name}</h3>
+                {showEvidence ? (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <button 
+                      onClick={() => setShowEvidence(false)}
+                      className="text-xs font-bold text-blue-600 mb-6 flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      ← Back to Rationale
+                    </button>
+                    
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 leading-tight">Evidence Chain</h3>
+                    
+                    <div className="space-y-4">
+                       <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                          <div className="flex items-center gap-2 mb-2">
+                             <div className="w-2 h-2 rounded-full bg-blue-500" />
+                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Slack Source</span>
+                          </div>
+                          <p className="text-xs italic text-gray-600 mb-2">"Wait, if we use SQS here, we can actually skip the Step Functions orchestration..."</p>
+                          <div className="text-[10px] text-gray-400">#architecture-internal • 2d ago</div>
+                       </div>
+
+                       <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                          <div className="flex items-center gap-2 mb-2">
+                             <div className="w-2 h-2 rounded-full bg-gray-900" />
+                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">GitHub PR #14</span>
+                          </div>
+                          <p className="text-xs font-medium text-gray-700 mb-1">feat: add durable SQS buffer for webhooks</p>
+                          <p className="text-[10px] text-gray-500">Verified by Memora Ingestion Adapter</p>
+                       </div>
+
+                       <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 mt-8">
+                          <div className="flex items-center justify-between mb-2">
+                             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Consensus Status</span>
+                             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          </div>
+                          <p className="text-[11px] text-emerald-800 font-medium">Verified cross-platform consensus between discussion and implementation.</p>
+                       </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{selectedNode.name}</h3>
                 
                 <div className="flex items-center gap-3 mb-6">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200/50">
@@ -212,6 +259,7 @@ export default function KnowledgeGraphPage() {
                          <div className="h-full bg-emerald-500" style={{ width: `${(selectedNode.confidence ?? 0) * 100}%` }} />
                       </div>
                    </div>
+                </div>
 
                    {(selectedNode.tags?.length ?? 0) > 0 && (
                       <div className="pt-6 border-t border-gray-100">
@@ -229,15 +277,16 @@ export default function KnowledgeGraphPage() {
                    <div className="pt-10">
                        <Button 
                           className="w-full bg-gray-900 text-white rounded-2xl h-12 font-semibold shadow-lg hover:bg-black transition-all"
-                          onClick={() => alert(`Tracing evidence chain for node: ${selectedNode.name}\n\nSources: Slack #architecture, GitHub PR #14 (verified)`)}
+                          onClick={() => setShowEvidence(true)}
                        >
                           View Evidence Chain
                        </Button>
                     </div>
-                </div>
-             </div>
-          </div>
-       )}
-    </div>
-  );
-}
+                  </>
+                )}
+              </div>
+           </div>
+        )}
+     </div>
+   );
+ }

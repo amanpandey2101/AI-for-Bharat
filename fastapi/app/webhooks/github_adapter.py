@@ -137,7 +137,13 @@ class GitHubAdapter(BaseWebhookAdapter):
         elif event == "push":
             commits = payload.get("commits", [])
             messages = "\n".join(c.get("message", "") for c in commits)
-            return f"Push to {payload.get('ref', '')}", messages, None
+            
+            # Humanize title: use the first commit message instead of refs/heads/...
+            first_msg = commits[0].get("message", "").split("\n")[0] if commits else "No message"
+            branch = payload.get("ref", "").split("/")[-1]
+            title = f"[{branch}] {first_msg}"
+            
+            return title, messages, None
         elif event in ("issues", "issue_comment"):
             issue = payload.get("issue", {})
             comment = payload.get("comment", {})
