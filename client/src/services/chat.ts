@@ -1,6 +1,6 @@
 import api from "@/lib/axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 export const sendMessage = async (workspaceId: string, message: string, sessionId?: string | null) => {
     return api.post(`/chat/workspaces/${workspaceId}`, {
@@ -10,12 +10,12 @@ export const sendMessage = async (workspaceId: string, message: string, sessionI
 };
 
 export const getChatSessions = async (workspaceId: string) => {
-    const response = await api.get(`/chat/${workspaceId}/sessions`);
+    const response = await api.get(`/chat/workspaces/${workspaceId}/sessions`);
     return response.data.sessions;
 };
 
 export const getChatSession = async (workspaceId: string, sessionId: string) => {
-    const response = await api.get(`/chat/${workspaceId}/sessions/${sessionId}`);
+    const response = await api.get(`/chat/workspaces/${workspaceId}/sessions/${sessionId}`);
     return response.data;
 };
 
