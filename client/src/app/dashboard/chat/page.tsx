@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Message = {
   id: string;
@@ -31,6 +39,8 @@ export default function FullChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -166,17 +176,22 @@ export default function FullChatPage() {
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    if (!activeWorkspace) return;
-    
-    if (!confirm("Are you sure you want to delete this chat?")) return;
+    setSessionToDelete(sessionId);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!activeWorkspace || !sessionToDelete) return;
+    
     try {
-      await deleteChatSession(activeWorkspace.workspace_id, sessionId);
-      if (activeSessionId === sessionId) {
+      await deleteChatSession(activeWorkspace.workspace_id, sessionToDelete);
+      if (activeSessionId === sessionToDelete) {
         setActiveSessionId(null);
         setMessages([]);
       }
       fetchSessions();
+      setIsDeleteDialogOpen(false);
+      setSessionToDelete(null);
     } catch (err) {
       console.error("Failed to delete chat session:", err);
     }
@@ -324,10 +339,11 @@ export default function FullChatPage() {
                 disabled={loading}
               />
               <Button
+                type="submit"
                 size="icon"
+                disabled={loading || !input.trim()}
                 className="absolute right-2 w-10 h-10 rounded-xl bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 cursor-pointer transition-all"
                 onClick={handleSend}
-                disabled={!input.trim() || loading}
               >
                 <Send className="w-4 h-4" />
               </Button>
@@ -339,6 +355,36 @@ export default function FullChatPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Delete Chat History
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this architectural conversation? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer rounded-xl"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white cursor-pointer rounded-xl"
+              onClick={confirmDelete}
+            >
+              Delete Conversation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

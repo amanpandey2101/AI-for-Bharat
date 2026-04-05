@@ -53,16 +53,18 @@ export default function KnowledgeGraphPage() {
         // --- Tune Physics (WOW Factor Tuning) ---
         if (fgRef.current) {
           const fg = fgRef.current;
-          fg.d3Force('charge').strength(-200); 
-          fg.d3Force('link').distance(80);
-          fg.d3Force('collide', forceCollide(20));
-          fg.d3Force('center').strength(0.1);
+          // Increased repulsion for better initial spread
+          fg.d3Force('charge').strength(-400); 
+          fg.d3Force('link').distance(120);
+          fg.d3Force('collide', forceCollide(30));
+          fg.d3Force('center').strength(0.15);
 
-          // Reheat simulation after data loads to prevent "clumped nodes" bug
+          // Force-restart simulation with high energy to push clumped nodes apart
+          fg.d3AlphaTarget(0.3);
           setTimeout(() => {
+             fg.d3AlphaTarget(0); // Let it cool down
              fg.d3ReheatSimulation();
-             fg.zoomToFit(600, 100);
-          }, 300);
+          }, 500);
         }
       } catch (err) {
         console.error("Failed to load graph:", err);
@@ -148,8 +150,13 @@ export default function KnowledgeGraphPage() {
             linkWidth={1.5}
             onNodeClick={handleNodeClick}
             backgroundColor="#ffffff"
-            d3AlphaDecay={0.06}
-            d3VelocityDecay={0.65}
+            d3AlphaDecay={0.03}
+            d3VelocityDecay={0.4}
+            onEngineStop={() => {
+               if (fgRef.current) {
+                  fgRef.current.zoomToFit(800, 150);
+               }
+            }}
           />
        </div>
 
@@ -188,7 +195,7 @@ export default function KnowledgeGraphPage() {
                    <div className="p-3 rounded-2xl bg-blue-50/50">
                       <Brain className="w-6 h-6 text-blue-600" />
                    </div>
-                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100" onClick={() => { setSelectedNode(null); setShowEvidence(false); }}>
+                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100 cursor-pointer" onClick={() => { setSelectedNode(null); setShowEvidence(false); }}>
                       <X className="w-4 h-4" />
                    </Button>
                 </div>
@@ -281,7 +288,7 @@ export default function KnowledgeGraphPage() {
                    
                    <div className="pt-10">
                        <Button 
-                          className="w-full bg-gray-900 text-white rounded-2xl h-12 font-semibold shadow-lg hover:bg-black transition-all"
+                          className="w-full bg-gray-900 text-white rounded-2xl h-12 font-semibold shadow-lg hover:bg-black transition-all cursor-pointer"
                           onClick={() => setShowEvidence(true)}
                        >
                           View Evidence Chain
