@@ -258,3 +258,57 @@ class GitHubService:
         except Exception:
             logger.error("Error creating ADR PR via GitHub", exc_info=True)
             return None
+
+    @staticmethod
+    def post_pr_comment(
+        access_token: str, 
+        repo_full_name: str, 
+        pr_number: int, 
+        body: str
+    ) -> bool:
+        """Post a comment to a GitHub Pull Request."""
+        try:
+            response = http_requests.post(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}/issues/{pr_number}/comments",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github+json",
+                },
+                json={"body": body}
+            )
+            if response.status_code == 201:
+                logger.info(f"Posted comment to {repo_full_name} PR #{pr_number}")
+                return True
+            else:
+                logger.error(f"Failed to post comment to {repo_full_name} PR #{pr_number}: {response.text}")
+                return False
+        except Exception:
+            logger.error(f"Exception posting comment to {repo_full_name} PR #{pr_number}", exc_info=True)
+            return False
+
+    @staticmethod
+    def update_pr_title(
+        access_token: str, 
+        repo_full_name: str, 
+        pr_number: int, 
+        new_title: str
+    ) -> bool:
+        """Update the title of a GitHub Pull Request."""
+        try:
+            response = http_requests.patch(
+                f"{GITHUB_API_URL}/repos/{repo_full_name}/pulls/{pr_number}",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github+json",
+                },
+                json={"title": new_title}
+            )
+            if response.status_code == 200:
+                logger.info(f"Updated {repo_full_name} PR #{pr_number} title to: {new_title}")
+                return True
+            else:
+                logger.error(f"Failed to update title for {repo_full_name} PR #{pr_number}: {response.text}")
+                return False
+        except Exception:
+            logger.error(f"Exception updating title for {repo_full_name} PR #{pr_number}", exc_info=True)
+            return False

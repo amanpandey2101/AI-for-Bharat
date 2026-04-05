@@ -98,6 +98,19 @@ Instructions:
 - If no relevant decisions found, say so clearly
 """
 
+PR_MENTOR_PROMPT = """Analyze this Pull Request and generate an improved Title, a brief summary of the changes, and list any relevant past Architectural Decisions from the knowledge base.
+
+## PR Data
+{pr_data}
+
+## Output (JSON only, no markdown fences)
+{{
+  "improved_title": "string",
+  "summary": "Short 1-2 sentence summary of what this code does",
+  "architectural_impact": "Low|Medium|High",
+  "comment_body": "Markdown text to comment on the PR containing context and related past decisions from KB. End the comment with a friendly message."
+}}"""
+
 
 class BedrockAgentService:
     """
@@ -253,8 +266,26 @@ class BedrockAgentService:
         Analyze an event for decision content using the Bedrock Agent.
         The agent will query the Knowledge Base for related past decisions.
         """
+        # Invisible Heuristic Score - wait for silence and then check regex
+        text_content = str(event_data.get("content", "")).lower()
+        if "slack" in event_data.get("platform", "") or "whatsapp" in event_data.get("platform", ""):
+            # Simple local heuristic (cost=0) to filter noisy chat apps
+            weak_signals = ["decid", "instead of", "going with", "use", "arch", "api", "db", "logic", "remove", "fix"]
+            score = sum(1 for signal in weak_signals if signal in text_content)
+            if score < 1 and not (event_data.get("tags") and "reaction_added" in event_data["tags"]):
+                logger.info(f"Skipping noisy message {event_data.get('event_id')} by invisible heuristic")
+                return None
+
         prompt = DECISION_ANALYSIS_PROMPT.format(
             event_data=json.dumps(event_data, indent=2, default=str)
+        )
+        response = self.invoke_agent(prompt)
+        return self._parse_json_response(response)
+
+    def analyze_pr(self, pr_data: Dict) -> Optional[Dict]:
+        """Runs the PR Mentor to summarize and retrieve context."""
+        prompt = PR_MENTOR_PROMPT.format(
+            pr_data=json.dumps(pr_data, indent=2, default=str)
         )
         response = self.invoke_agent(prompt)
         return self._parse_json_response(response)
@@ -438,6 +469,10 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
 
     decision_data = result["decision"]
     confidence_factors = decision_data.get("confidence_factors", {})
+    overall_confidence = decision_data.get("confidence_score", 0.5)
+
+    # AUTO-VALIDATE high confidence decisions
+    status = "validated" if overall_confidence >= 0.85 else "inferred"
 
 
     author = event.get("author", {})
@@ -466,7 +501,7 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
         platform=event.get("platform", "github"),
         intent=[evidence],
         confidence=ConfidenceScore(
-            overall=decision_data.get("confidence_score", 0.5),
+            overall=overall_confidence,
             evidence_quality=confidence_factors.get("evidence_quality", 0.5),
             evidence_quantity=confidence_factors.get("evidence_quantity", 0.5),
             participant_authority=confidence_factors.get("participant_authority", 0.5),
@@ -474,6 +509,7 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
         ),
         participants=decision_data.get("participants", []),
         tags=decision_data.get("tags", []),
+        status=status,
         source_event_ids=[event.get("event_id", "")],
     )
 

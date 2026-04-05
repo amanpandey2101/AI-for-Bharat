@@ -5,10 +5,10 @@ import random
 import statistics
 
 # --- CONFIGURATION ---
-BASE_URL = "https://d1uknmi6v4v72d.cloudfront.net" # Change to http://localhost:8000 for local
+BASE_URL = "https://d1uknmi6v4v72d.cloudfront.net" #http://localhost:8000 for local
 TOTAL_USERS = 100
 REQUESTS_PER_USER = 5
-CONCURRENCY = 20 # How many users run at the exact same time
+CONCURRENCY = 20 
 
 # --- LOGGING STATS ---
 results = []

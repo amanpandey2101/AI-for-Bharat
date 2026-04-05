@@ -95,6 +95,15 @@ async def _handle_webhook(platform: str, request: Request) -> JSONResponse:
     )
     thread.start()
 
+    # Launch PR Mentor if applicable
+    if event.event_type.value == "pr_created":
+        mentor_thread = threading.Thread(
+            target=_run_pr_mentor_bot,
+            args=(event_dict, event.raw_payload),
+            daemon=True,
+        )
+        mentor_thread.start()
+
     # 7. Return 202 Accepted (fast response)
     return JSONResponse(
         status_code=202,
@@ -147,6 +156,51 @@ def _process_event_with_agent(event_dict: Dict, event_id: str):
             EventRepository.update_status(event_id, EventStatus.FAILED)
         except Exception:
             pass
+
+def _run_pr_mentor_bot(event_dict: Dict, raw_payload: Dict):
+    """Background task: Auto-draft PR desc and mentor comment."""
+    event_type = event_dict.get("event_type", "")
+    if event_type != "pr_created":
+        return
+
+    try:
+        from app.agents.bedrock_agent import agent_service
+        from app.integrations.github_service import GitHubService
+        from app.integrations.models import IntegrationRepository
+
+        repo_full_name = event_dict.get("repository", "")
+        pr_number = raw_payload.get("pull_request", {}).get("number")
+        if not repo_full_name or not pr_number:
+            return
+
+        logger.info(f"[PR Mentor] Analyzing PR {event_dict.get('url')} for contextual mentorship...")
+        
+        pr_analysis = agent_service.analyze_pr(event_dict)
+        if not pr_analysis:
+            logger.info("[PR Mentor] Failed to analyze PR")
+            return
+
+        # Look up integration for the repo to get token
+        integration = IntegrationRepository.find_by_resource("github", repo_full_name)
+        if not integration or not integration.access_token:
+            logger.warning(f"[PR Mentor] No integration/token found for {repo_full_name}")
+            return
+
+        token = integration.access_token
+
+        # 1. Post Mentor Comment
+        comment_body = pr_analysis.get('comment_body', 'AI Analysis Complete.')
+        GitHubService.post_pr_comment(token, repo_full_name, pr_number, comment_body)
+
+        # 2. Update Title (The "Agentic" Wow Factor)
+        new_title = pr_analysis.get('improved_title')
+        if new_title and new_title != event_dict.get("title"):
+             GitHubService.update_pr_title(token, repo_full_name, pr_number, new_title)
+
+        logger.info(f"[PR Mentor] ✅ Successfully mentored PR #{pr_number}")
+
+    except Exception:
+        logger.error("[PR Mentor] Failed to run PR mentor bot", exc_info=True)
 
 
 # ── Platform Routes ────────────────────────────────────────────────────────────

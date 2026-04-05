@@ -96,6 +96,7 @@ graph TB
 **GitHub Webhook Handler**
 - Receives GitHub webhook events (PR created, review submitted, commits pushed)
 - Validates webhook signatures and filters relevant events
+- **Smart Heuristic Filter**: Implements zero-cost pre-filtering for informal channels to reduce LLM tokens
 - Queues events for processing via AWS SQS
 - Implements rate limiting and duplicate detection
 
@@ -171,6 +172,12 @@ class BedrockAgent:
 - Creates example requests and responses
 - Maintains documentation consistency
 - Updates docs automatically on API changes
+
+**PR Architect Mentor Agent**
+- Triggered on PR creation events via Webhook
+- Queries Knowledge Base using Vector Search for past decisions relevant to the PR
+- Auto-generates a contextual PR comment helping developers align with project standards
+- Proposes improved titles matching architectural scope
 
 **Interfaces:**
 ```python
@@ -457,9 +464,9 @@ class ConfidenceCalibrator:
 
 3. **Validation Interface**
    - Side-by-side evidence presentation
-   - Confidence factor breakdown
-   - Suggested improvements
-   - Binary approve/reject with comments
+   - visual **Confidence Breakdown Graph** (quality, consensus, temporal)
+   - Suggested improvements and **editable ADR interface**
+   - **"Correct AI" Semantic Loop**: Allows 1-line corrections to dynamically update KB knowledge
 
 4. **Feedback Integration**
    - Decision updates based on human input

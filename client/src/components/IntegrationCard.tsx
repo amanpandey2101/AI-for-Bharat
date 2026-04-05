@@ -23,6 +23,7 @@ type PlatformConfig = {
   bgGradient: string;
   connectLabel: string;
   resourceLabel: string;
+  comingSoon?: boolean;
 };
 
 const PLATFORM_CONFIG: Record<string, PlatformConfig> = {
@@ -145,6 +146,11 @@ export default function IntegrationCard({
               Connected
             </span>
           )}
+          {!isConnected && config.comingSoon && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+              Coming Soon
+            </span>
+          )}
         </div>
       </CardHeader>
 
@@ -227,7 +233,7 @@ export default function IntegrationCard({
           <Button
             className="w-full mt-1 cursor-pointer"
             type="button"
-            disabled={isConnecting}
+            disabled={isConnecting || config.comingSoon}
             onClick={() => onConnect(platform)}
           >
             {isConnecting ? (
@@ -235,6 +241,8 @@ export default function IntegrationCard({
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 Connecting...
               </>
+            ) : config.comingSoon ? (
+              "Coming Soon"
             ) : (
               config.connectLabel
             )}
@@ -242,10 +250,10 @@ export default function IntegrationCard({
         ) : (
           <a
             href={`${API_BASE}/integrations/${platform}/connect${accessToken ? `?token=${accessToken}` : ""}`}
-            className=""
+            className={config.comingSoon ? "pointer-events-none" : ""}
           >
-            <Button className="w-full mt-1 cursor-pointer" type="button">
-              {config.connectLabel}
+            <Button className="w-full mt-1 cursor-pointer" type="button" disabled={config.comingSoon}>
+              {config.comingSoon ? "Coming Soon" : config.connectLabel}
             </Button>
           </a>
         )}

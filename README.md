@@ -29,9 +29,11 @@ Development teams make hundreds of architectural and design decisions daily acro
 | 🤖 **AI Decision Inference** | Amazon Bedrock Agent analyzes events to detect technical decisions |
 | 📊 **Confidence Scoring** | Each decision scored on evidence quality, quantity, authority, and consistency |
 | 🔍 **Semantic Search (RAG)** | Ask "Why did we choose DynamoDB?" — agent searches Knowledge Base for answers |
-| ✅ **Human-in-the-Loop** | Validate or dispute AI-inferred decisions |
-| 📝 **ADR Automation** | Validated decisions automatically generate Pull Requests with standardized Markdown ADRs |
-| 📈 **Decision Dashboard** | Stats, activity feed, and decision memory at a glance |
+| ✅ **Human-in-the-Loop** | Validate or dispute AI-inferred decisions with direct 1-line corrections to teach the model |
+| 🧑‍🏫 **PR Mentor Bot** | Auto-generates PR context and titles using past architectural decisions |
+| 🛡️ **Smart Heuristic Filter** | Zero-cost pre-filtering of Slack/Chat channels to save Bedrock tokens |
+| 📝 **ADR Automation** | AI-drafted Architectural Decisions with live editing before committing |
+| 📈 **Decision Dashboard** | Stats, activity feed, and decision memory with visual confidence breakdown |
 | 🧩 **Evidence Chains** | Each decision linked to source PRs, comments, commits, and messages |
 
 ---
@@ -426,6 +428,12 @@ The agent receives development events and determines if they contain technical d
 - Confidence score (0.0–1.0) with factor breakdown
 - Participant list and tags
 - Related past decisions (from KB)
+
+### PR Mentor Agent
+The PR Mentor runs automatically when a PR is opened. It queries the Knowledge Base for relevant architectural history and generates an automated contextual comment pointing out how the PR aligns with past decisions, while suggesting title improvements.
+
+### Smart Heuristic Filter (Token Optimizer)
+To make Memora incredibly cost-effective at enterprise scales, the ingestion pipeline implements an **Invisible Heuristic Filter**. Before spending Claude/Nova tokens on Slack chatter, it runs a zero-cost local heuristic regex rule that scans for weak signal words. Only potentially significant technical discussions are forwarded to Bedrock.
 
 ### Confidence Scoring
 

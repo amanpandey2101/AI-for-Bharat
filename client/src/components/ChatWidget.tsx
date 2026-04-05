@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { useRouter } from "next/navigation";
 
 type Message = {
   id: string;
@@ -20,11 +21,12 @@ export function ChatWidget() {
   const { activeWorkspace } = useWorkspace();
   const { accessToken } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
@@ -69,7 +71,7 @@ export function ChatWidget() {
     setLoading(true);
 
     try {
-      const res = await sendMessageStream(activeWorkspace.workspace_id, userMsg.content, null, accessToken);
+      const res = await sendMessageStream(activeWorkspace.workspace_id, userMsg.content, sessionId, accessToken);
       
       if (!res.body) throw new Error("No response body");
       
@@ -90,16 +92,33 @@ export function ChatWidget() {
 
       setLoading(false); // Stop thinking spinner, we're typing now
 
+      let buffer = "";
+
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
         if (value) {
           const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
           
+          let displayContent = buffer;
+
+          if (buffer.includes("__SESSION_ID__:_")) {
+              continue;
+          }
+          
+          const sessionMatch = buffer.match(/__SESSION_ID__:([a-f0-9-]+)\n\n/);
+          if (sessionMatch) {
+              if (!sessionId) {
+                  setSessionId(sessionMatch[1]);
+              }
+              displayContent = buffer.replace(/__SESSION_ID__:[a-f0-9-]+\n\n/, "");
+          }
+
           setMessages((prev) => 
             prev.map((m) => {
               if (m.id === assistantId) {
-                return { ...m, content: m.content + chunk };
+                return { ...m, content: displayContent };
               }
               return m;
             })
@@ -145,8 +164,7 @@ export function ChatWidget() {
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-6 right-6 bg-background border shadow-2xl rounded-2xl flex flex-col z-50 transition-all duration-300 ease-in-out overflow-hidden",
-            isExpanded ? "w-[450px] h-[700px] max-h-[90vh]" : "w-[360px] h-[550px] max-h-[80vh]"
+            "fixed bottom-6 right-6 bg-background border shadow-2xl rounded-2xl flex flex-col z-50 transition-all duration-300 ease-in-out overflow-hidden w-[360px] h-[550px] max-h-[80vh]"
           )}
         >
           {/* Header */}
@@ -164,18 +182,18 @@ export function ChatWidget() {
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white"
+                onClick={() => {
+                  setIsOpen(false);
+                  router.push("/dashboard/chat");
+                }}
+                className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white cursor-pointer"
+                title="Open fullscreen chat"
               >
-                {isExpanded ? (
-                  <Minimize2 className="w-4 h-4" />
-                ) : (
-                  <Maximize2 className="w-4 h-4" />
-                )}
+                <Maximize2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white"
+                className="p-1.5 hover:bg-white/20 rounded-md transition-colors text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

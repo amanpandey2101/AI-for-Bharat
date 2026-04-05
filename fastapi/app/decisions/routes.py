@@ -132,6 +132,29 @@ def list_decisions(
     }
 
 
+@decision_router.get("/graph/data")
+def get_graph_data(
+    status: Optional[str] = Query(None),
+    repository: Optional[str] = Query(None),
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    Returns nodes and links for the interactive Knowledge Graph.
+    """
+    from app.decisions.graph_service import GraphService
+    
+    # Fetch results
+    if repository:
+        decisions = DecisionRepository.list_by_repository(repository, 200)
+    elif status:
+        decisions = DecisionRepository.list_by_status(status, 200)
+    else:
+        decisions = DecisionRepository.list_recent(200)
+
+    data = GraphService.build_graph(decisions)
+    return data
+
+
 
 @decision_router.get("/{decision_id}")
 def get_decision(
@@ -161,7 +184,21 @@ def validate_decision(
         raise HTTPException(status_code=404, detail="Decision not found")
 
     new_status = DecisionStatus(body.status)
-    DecisionRepository.update_status(decision_id, new_status)
+    
+    if new_status == DecisionStatus.DISPUTED and body.comment:
+        # HUMAN-IN-THE-LOOP: Update decision based on 1-line correction
+        decision.description = f"{decision.description}\n\n[Correction]: {body.comment}"
+        decision.status = new_status.value
+        DecisionRepository.save(decision)
+        
+        # Re-upload to Knowledge Base so future RAG queries see the correction
+        from app.agents.bedrock_agent import agent_service
+        agent_service.upload_decision_to_kb(decision.model_dump())
+        agent_service.sync_knowledge_base()
+        
+        logger.info(f"Decision {decision_id} corrected and re-synced to KB")
+    else:
+        DecisionRepository.update_status(decision_id, new_status)
 
     logger.info(f"Decision {decision_id} status updated to {new_status} by {user_id}")
     
