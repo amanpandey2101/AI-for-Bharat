@@ -162,9 +162,13 @@ export default function KnowledgeGraphPage() {
                  <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                  Validated Decisions
               </div>
-               <div className="flex items-center gap-3 text-xs font-semibold text-gray-700">
+              <div className="flex items-center gap-3 text-xs font-semibold text-gray-700">
                  <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
                  Inferred Context
+              </div>
+              <div className="flex items-center gap-3 text-xs font-semibold text-gray-700">
+                 <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                 Disputed Decisions
               </div>
            </div>
        </div>
