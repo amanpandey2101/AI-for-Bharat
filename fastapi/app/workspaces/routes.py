@@ -348,6 +348,7 @@ def list_workspace_events(
                 "timestamp": e.timestamp,
                 "author": e.author.name if e.author else None,
                 "repository": e.context.repository or e.context.project or e.context.channel or "",
+                "description": e.description or e.content or "",
             }
             for e in paginated
         ],

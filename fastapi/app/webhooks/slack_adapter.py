@@ -140,7 +140,10 @@ class SlackAdapter(BaseWebhookAdapter):
 
         # Extract content
         text = event.get("text", "")
-        title = f"Slack message in #{channel_name}"
+        # Humanize title: use a snippet of the message instead of generic "message in #channel"
+        title = (text[:60] + "...") if len(text) > 60 else text
+        if not title:
+            title = f"Message in #{channel_name}"
 
         return IngestionEvent(
             platform=Platform.SLACK,
