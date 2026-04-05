@@ -3,10 +3,8 @@
 import React from "react";
 import { 
   User, 
-  Settings, 
   Github, 
   Slack, 
-  Database, 
   ShieldCheck, 
   LayoutDashboard,
   ExternalLink,
@@ -74,7 +72,7 @@ export default function SettingsPage() {
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
                   <span className="text-sm font-bold uppercase tracking-wider text-emerald-400">Pro Account</span>
                </div>
-               <p className="text-sm text-gray-300 mb-6">You're currently monitoring 12,000 architectural vectors across 3 environments.</p>
+               <p className="text-sm text-gray-300 mb-6">You&rsquo;re currently monitoring 12,000 architectural vectors across 3 environments.</p>
                <Button className="w-full bg-white text-black hover:bg-gray-100 rounded-xl font-bold h-10 transition-all">
                  Upgrade Plan
                </Button>
