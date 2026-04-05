@@ -9,6 +9,16 @@ export const sendMessage = async (workspaceId: string, message: string, sessionI
     });
 };
 
+export const getChatSessions = async (workspaceId: string) => {
+    const response = await api.get(`/chat/${workspaceId}/sessions`);
+    return response.data.sessions;
+};
+
+export const getChatSession = async (workspaceId: string, sessionId: string) => {
+    const response = await api.get(`/chat/${workspaceId}/sessions/${sessionId}`);
+    return response.data;
+};
+
 export const sendMessageStream = async (workspaceId: string, message: string, sessionId?: string | null, accessToken?: string | null) => {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",

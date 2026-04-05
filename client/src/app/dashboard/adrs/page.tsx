@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useWorkspace } from "@/context/WorkspaceContext";
-import { getADRs, createADR, deleteADR, draftADR, type ADR } from "@/services/adrs";
+import { getADRs, createADR, deleteADR, draftADR, updateADR, type ADR } from "@/services/adrs";
 import { toast } from "sonner";
 import {
   BookOpen,
@@ -13,6 +13,7 @@ import {
   MoreVertical,
   Trash2,
   Wand2,
+  Edit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +47,9 @@ export default function ADRsPage() {
   const [draftTopic, setDraftTopic] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [showAutoDraft, setShowAutoDraft] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingAdrId, setEditingAdrId] = useState<string | null>(null);
 
   const fetchADRs = useCallback(async () => {
     if (!activeWorkspace) return;
@@ -123,6 +127,41 @@ export default function ADRsPage() {
     }
   };
 
+  const handleEditClick = (adr: ADR) => {
+    setEditingAdrId(adr.adr_id);
+    setTitle(adr.title || "");
+    setContext(adr.context || "");
+    setDecision(adr.decision || "");
+    setConsequences(adr.consequences || "");
+    setEditOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!activeWorkspace || !editingAdrId || !title.trim() || !decision.trim()) return;
+
+    try {
+      setSaving(true);
+      const res = await updateADR(activeWorkspace.workspace_id, editingAdrId, {
+        title: title.trim(),
+        context: context.trim(),
+        decision: decision.trim(),
+        consequences: consequences.trim(),
+      });
+      setAdrs(adrs.map(a => a.adr_id === editingAdrId ? res.data.adr : a));
+      toast.success("ADR updated successfully");
+      setEditOpen(false);
+      setEditingAdrId(null);
+      setTitle("");
+      setContext("");
+      setDecision("");
+      setConsequences("");
+    } catch {
+      toast.error("Failed to update ADR");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const statusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "accepted":
@@ -163,7 +202,13 @@ export default function ADRsPage() {
           </p>
         </div>
 
-        <Button onClick={() => setCreateOpen(true)} className="cursor-pointer">
+        <Button onClick={() => {
+            setTitle("");
+            setContext("");
+            setDecision("");
+            setConsequences("");
+            setCreateOpen(true);
+        }} className="cursor-pointer">
           <Plus className="w-4 h-4 mr-2" />
           New Decision
         </Button>
@@ -234,6 +279,13 @@ export default function ADRsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => handleEditClick(adr)}
+                      className="cursor-pointer"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit ADR
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleDelete(adr.adr_id)}
                       className="text-red-600 focus:text-red-600 cursor-pointer"
@@ -333,6 +385,72 @@ export default function ADRsPage() {
             >
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Save Decision
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={(open) => {
+          setEditOpen(open);
+          if (!open) {
+              setEditingAdrId(null);
+          }
+      }}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Architecture Decision</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-1">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                placeholder="e.g. Use React Server Components for performance"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Context</Label>
+              <Textarea
+                placeholder="What is the problem or force that makes this decision necessary?"
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Decision</Label>
+              <Textarea
+                placeholder="What exactly are we doing?"
+                value={decision}
+                onChange={(e) => setDecision(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Consequences</Label>
+              <Textarea
+                placeholder="What are the positive and negative consequences?"
+                value={consequences}
+                onChange={(e) => setConsequences(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdate}
+              disabled={!title.trim() || !decision.trim() || saving}
+            >
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>

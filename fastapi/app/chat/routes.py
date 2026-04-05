@@ -12,6 +12,9 @@ from app.utils.dependencies import get_current_user_id
 from app.workspaces import WorkspaceRepository
 from app.agents.bedrock_agent import get_agent_runtime_client
 from app.config import settings
+from app.chat.repository import ChatRepository
+import uuid
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +24,39 @@ class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
 
+@chat_router.get("/{workspace_id}/sessions")
+def get_chat_sessions(
+    workspace_id: str,
+    _user_id: str = Depends(get_current_user_id),
+):
+    ws = WorkspaceRepository.get(workspace_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+        
+    sessions = ChatRepository.list_sessions_for_workspace(workspace_id)
+    return {"sessions": sessions}
+
+@chat_router.get("/{workspace_id}/sessions/{session_id}")
+def get_chat_session(
+    workspace_id: str,
+    session_id: str,
+    _user_id: str = Depends(get_current_user_id),
+):
+    ws = WorkspaceRepository.get(workspace_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+        
+    session = ChatRepository.get_session(session_id)
+    if not session or session.get("workspace_id") != workspace_id:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+        
+    return session
+
 @chat_router.post("/{workspace_id}")
 def chat_with_workspace(
     workspace_id: str,
     body: ChatRequest,
-    user_id: str = Depends(get_current_user_id),
+    _user_id: str = Depends(get_current_user_id),
 ):
     """
     Chat with the workspace knowledge base using Bedrock's RetrieveAndGenerate API.
@@ -69,11 +100,42 @@ def chat_with_workspace(
 
             User Question: {body.message}"""
 
-        # 3. Generate stream response using Converse API
+        # 3. Handle session and message persistence
+        session_id = body.session_id
+        if not session_id:
+            title = body.message[:50] + "..." if len(body.message) > 50 else body.message
+            new_session = ChatRepository.create_session(workspace_id, title)
+            session_id = new_session["session_id"]
+            
+        user_msg = {
+            "id": str(uuid.uuid4()),
+            "role": "user",
+            "content": body.message,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        # 4. Generate stream response using Converse API
         def iter_chat_stream():
+            full_response = ""
             try:
+                # First yield the session_id so the client knows it
+                yield f"__SESSION_ID__:{session_id}\n\n"
+                
                 for chunk_text in agent_service._invoke_model_direct_stream(prompt):
+                    full_response += chunk_text
                     yield chunk_text
+                    
+                # Store the messages after generation is complete
+                # It evaluates after the generator is exhausted
+                assistant_msg = {
+                    "id": str(uuid.uuid4()),
+                    "role": "assistant",
+                    "content": full_response,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+                ChatRepository.save_messages(session_id, [user_msg, assistant_msg])
+
             except Exception as e:
                 logger.error("Error during streaming", exc_info=True)
                 yield "\n\n[Error streaming response.]"

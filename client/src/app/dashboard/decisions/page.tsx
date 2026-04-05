@@ -13,6 +13,8 @@ import {
   Clock,
   ChevronRight,
   Sparkles,
+  Send,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -95,6 +97,8 @@ export default function DecisionsPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [correctingId, setCorrectingId] = useState<string | null>(null);
+  const [correctionText, setCorrectionText] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalDecisions, setTotalDecisions] = useState(0);
@@ -132,11 +136,15 @@ export default function DecisionsPage() {
     fetchData();
   }, [fetchData]);
 
-  const handleValidate = async (id: string, action: "validated" | "disputed") => {
+  const handleValidate = async (id: string, action: "validated" | "disputed", comment?: string) => {
     try {
       setValidatingId(id);
-      await validateDecision(id, action);
-      toast.success(`Decision ${action}`);
+      await validateDecision(id, action, comment);
+      toast.success(action === "validated" ? "Decision validated" : "AI corrected successfully!");
+      if (action === "disputed") {
+          setCorrectingId(null);
+          setCorrectionText("");
+      }
       fetchData();
     } catch {
       toast.error("Failed to update decision");
@@ -256,11 +264,10 @@ export default function DecisionsPage() {
             return (
               <Card
                 key={d.decision_id}
-                className={`transition-all group cursor-pointer ${expandedId === d.decision_id ? "ring-2 ring-primary/10 shadow-md" : "hover:shadow-md"}`}
-                onClick={() => setExpandedId(expandedId === d.decision_id ? null : d.decision_id)}
+                className={`transition-all group border ${d.confidence >= 0.85 && d.status === "inferred" ? "border-emerald-200" : ""} ${expandedId === d.decision_id ? "ring-2 ring-primary/10 shadow-md" : "hover:shadow-md"}`}
               >
                 <CardContent className="py-4 px-5">
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-4 cursor-pointer" onClick={() => setExpandedId(expandedId === d.decision_id ? null : d.decision_id)}>
                     <div className="flex flex-col items-center gap-1 pt-1 shrink-0 w-12">
                       <span
                         className={`text-sm font-bold ${confidenceColor(d.confidence)}`}
@@ -287,6 +294,11 @@ export default function DecisionsPage() {
                           {statusCfg.icon}
                           {statusCfg.label}
                         </span>
+                        {d.status === "inferred" && d.confidence >= 0.85 && (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Auto-Validated
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {d.description}
@@ -317,34 +329,37 @@ export default function DecisionsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0 ml-2">
-                      {d.status === "inferred" && (
+                       {d.status === "inferred" && correctingId !== d.decision_id && (
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleValidate(d.decision_id, "validated");
-                            }}
-                            disabled={validatingId === d.decision_id}
-                            className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 cursor-pointer"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                            Validate
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleValidate(d.decision_id, "disputed");
-                            }}
-                            disabled={validatingId === d.decision_id}
-                            className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-800 cursor-pointer"
-                          >
-                            <XCircle className="w-3.5 h-3.5 mr-1.5" />
-                            Dispute
-                          </Button>
+                           {d.confidence < 0.85 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleValidate(d.decision_id, "validated");
+                                }}
+                                disabled={validatingId === d.decision_id}
+                                className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                                Validate
+                              </Button>
+                           )}
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               setCorrectingId(d.decision_id);
+                               setExpandedId(d.decision_id);
+                             }}
+                             disabled={validatingId === d.decision_id}
+                             className="text-primary hover:text-primary cursor-pointer"
+                           >
+                             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                             Correct AI
+                           </Button>
                         </div>
                       )}
                       <ChevronRight className={`w-5 h-5 ml-2 transition-transform text-muted-foreground ${expandedId === d.decision_id ? "rotate-90" : "opacity-0 group-hover:opacity-100"}`} />
@@ -354,18 +369,70 @@ export default function DecisionsPage() {
                   {/* Expanded Content */}
                   {expandedId === d.decision_id && (
                     <div className="mt-4 pt-4 border-t border-border pl-16 pr-4 animate-in slide-in-from-top-2 fade-in duration-200 text-sm">
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                          <Brain className="w-4 h-4 text-blue-500" />
-                          Rationale
-                        </h4>
-                        <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                          {d.rationale || "No rationale was explicitly captured for this decision."}
-                        </p>
+                      {correctingId === d.decision_id && (
+                        <div className="mb-6 bg-muted/50 rounded-lg border p-4">
+                           <h4 className="font-semibold mb-2 text-primary flex items-center gap-2">
+                              Teach the AI
+                           </h4>
+                           <p className="text-xs text-muted-foreground mb-3">Provide a 1-line correction. This will update the decision and store your preference in the Knowledge Base.</p>
+                           <div className="flex gap-2">
+                             <input 
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="E.g. We decided to use Postgres, not Mongo."
+                                value={correctionText}
+                                onChange={(e) => setCorrectionText(e.target.value)}
+                             />
+                             <Button size="sm" onClick={() => handleValidate(d.decision_id, "disputed", correctionText)} disabled={!correctionText.trim() || validatingId === d.decision_id}>
+                               <Send className="w-3.5 h-3.5 mr-1.5" />
+                               Submit
+                             </Button>
+                             <Button variant="ghost" size="sm" onClick={() => setCorrectingId(null)}>
+                               Cancel
+                             </Button>
+                           </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-6 mb-4">
+                        <div className="col-span-2">
+                          <h4 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                            <Brain className="w-4 h-4 text-blue-500" />
+                            Rationale
+                          </h4>
+                          <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                            {d.rationale || "No rationale was explicitly captured for this decision."}
+                          </p>
+                        </div>
+                        
+                        <div className="border-l pl-4">
+                          <h4 className="font-semibold text-foreground flex items-center gap-2 mb-3 text-xs uppercase tracking-wider text-muted-foreground">
+                            Confidence Breakdown
+                          </h4>
+                          <div className="space-y-3">
+                            {[
+                              { label: "Evidence Quality", val: d.confidence_factors?.evidence_quality || d.confidence },
+                              { label: "Consensus", val: d.confidence_factors?.participant_authority || d.confidence },
+                              { label: "Temporal Match", val: d.confidence_factors?.temporal_consistency || d.confidence }
+                            ].map((factor, i) => (
+                              <div key={i}>
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-muted-foreground flex items-center gap-1">
+                                    {factor.label}
+                                    <Info className="w-3 h-3 opacity-50" />
+                                  </span>
+                                  <span className="font-medium">{(factor.val * 100).toFixed(0)}%</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-muted rounded-full">
+                                  <div className={`h-full rounded-full ${confidenceBar(factor.val)}`} style={{ width: `${factor.val * 100}%` }} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      
+
                       {d.alternatives_considered && d.alternatives_considered.length > 0 && (
-                        <div>
+                        <div className="mt-4 pt-4 border-t border-border/50">
                           <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
                             <Filter className="w-4 h-4 text-amber-500" />
                             Alternatives Considered

@@ -46,6 +46,7 @@ import {
   Pencil,
   Trash2,
   BookOpen,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -61,8 +62,10 @@ const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Integrations", url: "/dashboard/integrations", icon: Plug },
   { title: "Activity Feed", url: "/dashboard/activity", icon: Activity },
-  { title: "Decision Memory", url: "/dashboard/decisions", icon: Brain },
-  { title: "Architecture (ADRs)", url: "/dashboard/adrs", icon: BookOpen },
+  { title: "Knowledge Graph", url: "/dashboard/graph", icon: Brain },
+  { title: "Decision Memory", url: "/dashboard/decisions", icon: BookOpen },
+  { title: "Memora Chat", url: "/dashboard/chat", icon: MessageSquare },
+  { title: "Architecture (ADRs)", url: "/dashboard/adrs", icon: FolderKanban },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 

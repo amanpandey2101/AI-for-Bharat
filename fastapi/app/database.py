@@ -37,13 +37,17 @@ def get_table_name(base_name: str) -> str:
 
 
 USERS_TABLE_NAME = get_table_name("users")
-
+CHAT_SESSIONS_TABLE_NAME = get_table_name("chat_sessions")
 
 # ── Table References ───────────────────────────────────────────────────────────
 
 def get_users_table():
     """Return a reference to the Users DynamoDB table."""
     return dynamodb.Table(USERS_TABLE_NAME)
+
+def get_chat_sessions_table():
+    """Return a reference to the Chat Sessions DynamoDB table."""
+    return dynamodb.Table(CHAT_SESSIONS_TABLE_NAME)
 
 
 # ── Table Creation (for local dev / first-time setup) ──────────────────────────
@@ -106,6 +110,48 @@ def create_users_table():
             return dynamodb.Table(USERS_TABLE_NAME)
         raise
 
+def create_chat_sessions_table():
+    """
+    Create the Chat Sessions table in DynamoDB.
+    - PK: session_id
+    - GSI: workspace_id
+    """
+    try:
+        table = dynamodb.create_table(
+            TableName=CHAT_SESSIONS_TABLE_NAME,
+            KeySchema=[
+                {"AttributeName": "session_id", "KeyType": "HASH"},
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "session_id", "AttributeType": "S"},
+                {"AttributeName": "workspace_id", "AttributeType": "S"},
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    "IndexName": "GSI_Workspace",
+                    "KeySchema": [
+                        {"AttributeName": "workspace_id", "KeyType": "HASH"},
+                    ],
+                    "Projection": {"ProjectionType": "ALL"},
+                    "ProvisionedThroughput": {
+                        "ReadCapacityUnits": 5,
+                        "WriteCapacityUnits": 5,
+                    },
+                },
+            ],
+            ProvisionedThroughput={
+                "ReadCapacityUnits": 5,
+                "WriteCapacityUnits": 5,
+            },
+        )
+        table.wait_until_exists()
+        logger.info(f"Created DynamoDB table: {CHAT_SESSIONS_TABLE_NAME}")
+        return table
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceInUseException":
+            return dynamodb.Table(CHAT_SESSIONS_TABLE_NAME)
+        raise
+
 
 def ensure_tables_exist():
     """Create all required DynamoDB tables if they don't exist."""
@@ -128,5 +174,8 @@ def ensure_tables_exist():
     from app.decisions import DECISIONS_TABLE_NAME, create_decisions_table
     if DECISIONS_TABLE_NAME not in existing:
         create_decisions_table()
+
+    if CHAT_SESSIONS_TABLE_NAME not in existing:
+        create_chat_sessions_table()
 
     logger.info("All DynamoDB tables verified.")
