@@ -19,6 +19,11 @@ export const getChatSession = async (workspaceId: string, sessionId: string) => 
     return response.data;
 };
 
+export const deleteChatSession = async (workspaceId: string, sessionId: string) => {
+    const response = await api.delete(`/chat/workspaces/${workspaceId}/sessions/${sessionId}`);
+    return response.data;
+};
+
 export const sendMessageStream = async (workspaceId: string, message: string, sessionId?: string | null, accessToken?: string | null) => {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",

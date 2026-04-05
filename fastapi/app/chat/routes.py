@@ -146,3 +146,20 @@ def chat_with_workspace(
     except Exception as e:
         logger.error("Chat failure", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@chat_router.delete("/{workspace_id}/sessions/{session_id}")
+def delete_chat_session(
+    workspace_id: str,
+    session_id: str,
+    _user_id: str = Depends(get_current_user_id),
+):
+    ws = WorkspaceRepository.get(workspace_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+        
+    session = ChatRepository.get_session(session_id)
+    if not session or session.get("workspace_id") != workspace_id:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+        
+    ChatRepository.delete_session(session_id)
+    return {"status": "success", "message": "Session deleted"}

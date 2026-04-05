@@ -67,3 +67,13 @@ class ChatRepository:
         except Exception as e:
             logger.error(f"Error saving messages to {session_id}: {e}")
             raise
+
+    @classmethod
+    def delete_session(cls, session_id: str):
+        """Permanently delete a chat session."""
+        try:
+            cls.table.delete_item(Key={"session_id": session_id})
+            logger.info(f"Deleted session: {session_id}")
+        except Exception as e:
+            logger.error(f"Error deleting session {session_id}: {e}")
+            raise
