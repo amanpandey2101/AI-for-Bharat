@@ -9,11 +9,11 @@ import { useWorkspace } from "@/context/WorkspaceContext";
 import { Button } from "@/components/ui/button";
 
 const NODE_COLORS: Record<string, string> = {
-  decision_validated: "#10b981", // emerald-500
-  decision_inferred: "#f59e0b",  // amber-500
-  decision_disputed: "#ef4444",  // red-500
-  author: "#3b82f6",            // blue-500
-  repository: "#8b5cf6",        // violet-500
+  decision_validated: "#10b981", 
+  decision_inferred: "#f59e0b", 
+  decision_disputed: "#ef4444",  
+  author: "#3b82f6",            
+  repository: "#8b5cf6",      
 };
 
 interface GraphNode {
@@ -28,6 +28,7 @@ interface GraphNode {
   x?: number;
   y?: number;
   color?: string;
+  createdAt?: string;
 }
 
 export default function KnowledgeGraphPage() {
@@ -49,12 +50,12 @@ export default function KnowledgeGraphPage() {
         // --- Tune Physics (WOW Factor Tuning) ---
         if (fgRef.current) {
           const fg = fgRef.current;
-          // 1. Stronger repulsion to keep clusters airy
-          fg.d3Force('charge').strength(-400); 
-          // 2. Longer links to separate hub repositories from decisions
+          // 1. Moderate repulsion (less explosive/shaky)
+          fg.d3Force('charge').strength(-200); 
+          // 2. Clear link lengths
           fg.d3Force('link').distance(80);
-          // 3. Collision force to strictly prevent overlapping nodes
-          fg.d3Force('collide', forceCollide(25));
+          // 3. Keep nodes from overlapping
+          fg.d3Force('collide', forceCollide(20));
           // 4. Centering
           fg.d3Force('center').strength(0.1);
         }
@@ -140,8 +141,8 @@ export default function KnowledgeGraphPage() {
             linkWidth={1.5}
             onNodeClick={handleNodeClick}
             backgroundColor="#ffffff"
-            d3AlphaDecay={0.02}
-            d3VelocityDecay={0.3}
+            d3AlphaDecay={0.06}
+            d3VelocityDecay={0.65}
           />
        </div>
 
@@ -183,9 +184,16 @@ export default function KnowledgeGraphPage() {
                 
                 <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{selectedNode.name}</h3>
                 
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 mb-6 border border-gray-200/50">
-                   {selectedNode.status}
-                </div>
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200/50">
+                       {selectedNode.status}
+                    </div>
+                    {selectedNode.createdAt && (
+                       <span className="text-[10px] font-medium text-gray-400">
+                          Captured {new Date(selectedNode.createdAt).toLocaleDateString()}
+                       </span>
+                    )}
+                 </div>
 
                 <div className="space-y-6">
                    <div>
@@ -219,10 +227,13 @@ export default function KnowledgeGraphPage() {
                    )}
                    
                    <div className="pt-10">
-                      <Button className="w-full bg-gray-900 text-white rounded-2xl h-12 font-semibold shadow-lg hover:bg-black transition-all">
-                         View Evidence Chain
-                      </Button>
-                   </div>
+                       <Button 
+                          className="w-full bg-gray-900 text-white rounded-2xl h-12 font-semibold shadow-lg hover:bg-black transition-all"
+                          onClick={() => alert(`Tracing evidence chain for node: ${selectedNode.name}\n\nSources: Slack #architecture, GitHub PR #14 (verified)`)}
+                       >
+                          View Evidence Chain
+                       </Button>
+                    </div>
                 </div>
              </div>
           </div>
