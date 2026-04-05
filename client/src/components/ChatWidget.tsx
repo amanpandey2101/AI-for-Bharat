@@ -153,7 +153,7 @@ export function ChatWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg shadow-violet-500/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-50"
+          className="fixed bottom-6 right-6 w-14 h-14 bg-violet-600 hover:bg-violet-700 text-white rounded-full shadow-lg shadow-violet-500/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-50 cursor-pointer"
           aria-label="Open AI Assistant"
         >
           <Brain className="w-6 h-6" />
@@ -251,7 +251,7 @@ export function ChatWidget() {
               <Button
                 size="icon"
                 variant="ghost"
-                className="absolute right-1 w-8 h-8 rounded-full text-violet-600 hover:text-violet-700 hover:bg-violet-100 disabled:opacity-50"
+                className="absolute right-1 w-8 h-8 rounded-full text-violet-600 hover:text-violet-700 hover:bg-violet-100 disabled:opacity-50 cursor-pointer"
                 onClick={handleSend}
                 disabled={!input.trim() || loading}
               >

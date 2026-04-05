@@ -255,7 +255,7 @@ export function AppSidebar() {
                   const isActive = pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={isActive}>
+                      <SidebarMenuButton asChild isActive={isActive} className="cursor-pointer">
                         <Link href={item.url}>
                           <item.icon className="w-4 h-4" />
                           <span>{item.title}</span>

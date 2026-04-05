@@ -60,7 +60,7 @@ export default function SettingsPage() {
               </div>
               <h2 className="text-lg font-bold text-gray-900">Engineering Lead</h2>
               <p className="text-xs text-gray-500">memora-dev-team@internal.com</p>
-              <Button variant="outline" size="sm" className="mt-4 rounded-xl border-gray-200">
+              <Button variant="outline" size="sm" className="mt-4 rounded-xl border-gray-200 cursor-pointer">
                 Edit Profile
               </Button>
             </div>
@@ -73,7 +73,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-bold uppercase tracking-wider text-emerald-400">Pro Account</span>
                </div>
                <p className="text-sm text-gray-300 mb-6">You&rsquo;re currently monitoring 12,000 architectural vectors across 3 environments.</p>
-               <Button className="w-full bg-white text-black hover:bg-gray-100 rounded-xl font-bold h-10 transition-all">
+               <Button className="w-full bg-white text-black hover:bg-gray-100 rounded-xl font-bold h-10 transition-all cursor-pointer">
                  Upgrade Plan
                </Button>
             </div>

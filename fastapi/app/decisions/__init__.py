@@ -286,7 +286,7 @@ class DecisionRepository:
         """Perform batch queries for multiple repositories and merge results."""
         decisions = []
         # In a high-traffic system, we'd use BatchGetItem or parallel queries.
-        # For the hackathon, we query each repo sequentially up to the limit.
+        # For demo, we query each repo sequentially up to the limit.
         for repo in repositories:
             if not repo: continue
             repo_decisions = DecisionRepository.list_by_repository(repo, limit=limit // len(repositories) or 10)
