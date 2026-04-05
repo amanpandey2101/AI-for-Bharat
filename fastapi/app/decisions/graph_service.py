@@ -32,7 +32,8 @@ class GraphService:
                     "confidence": d.confidence.overall,
                     "val": 12 + (d.confidence.overall * 8), # Size reflects confidence
                     "description": d.description,
-                    "tags": d.tags
+                    "tags": d.tags,
+                    "createdAt": d.created_at
                 })
                 node_ids.add(d_node_id)
             
