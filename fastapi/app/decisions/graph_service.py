@@ -30,10 +30,18 @@ class GraphService:
                     "type": "decision",
                     "status": d.status,
                     "confidence": d.confidence.overall,
-                    "val": 12 + (d.confidence.overall * 8), # Size reflects confidence
+                    "val": min(8 + (d.confidence.overall * 4), 14), # Size reflects confidence, capped
                     "description": d.description,
                     "tags": d.tags,
-                    "createdAt": d.created_at
+                    "createdAt": d.created_at,
+                    "evidence": {
+                        "intent": [{"source_type": e.source_type, "content": e.content[:200], "author": e.author, "timestamp": e.timestamp, "url": e.url} for e in d.intent[:3]],
+                        "execution": [{"source_type": e.source_type, "content": e.content[:200], "author": e.author, "timestamp": e.timestamp, "url": e.url} for e in d.execution[:3]],
+                        "authority": [{"source_type": e.source_type, "content": e.content[:200], "author": e.author, "timestamp": e.timestamp, "url": e.url} for e in d.authority[:2]],
+                    },
+                    "participants": list(d.participants)[:5],
+                    "repository": d.repository,
+                    "platform": d.platform,
                 })
                 node_ids.add(d_node_id)
             
@@ -46,7 +54,7 @@ class GraphService:
                         "id": repo_node_id,
                         "name": d.repository,
                         "type": "repository",
-                        "val": 18,
+                        "val": 10,
                         "platform": d.platform
                     })
                     node_ids.add(repo_node_id)
@@ -96,8 +104,8 @@ class GraphService:
         # Final pass: Adjust sizes based on connectivity
         for node in nodes:
             if node["type"] == "repository":
-                node["val"] = 15 + (repo_impact_counts.get(node["id"], 0) * 2)
+                node["val"] = min(10 + (repo_impact_counts.get(node["id"], 0) * 0.5), 20)
             elif node["type"] == "author":
-                node["val"] = 8 + (author_contribution_counts.get(node["id"], 0) * 1.5)
+                node["val"] = min(6 + (author_contribution_counts.get(node["id"], 0) * 0.5), 14)
 
         return {"nodes": nodes, "links": links}

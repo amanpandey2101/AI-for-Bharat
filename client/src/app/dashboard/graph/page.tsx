@@ -19,6 +19,14 @@ const NODE_COLORS: Record<string, string> = {
   repository: "#8b5cf6",      
 };
 
+interface EvidenceItem {
+  source_type: string;
+  content: string;
+  author: string;
+  timestamp: string;
+  url?: string;
+}
+
 interface GraphNode {
   id: string;
   name: string;
@@ -32,6 +40,14 @@ interface GraphNode {
   y?: number;
   color?: string;
   createdAt?: string;
+  evidence?: {
+    intent: EvidenceItem[];
+    execution: EvidenceItem[];
+    authority: EvidenceItem[];
+  };
+  participants?: string[];
+  repository?: string;
+  platform?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,21 +113,19 @@ export default function KnowledgeGraphPage() {
   useEffect(() => {
     if (!data || loading) return;
 
-    // Small delay to ensure ForceGraph2D has mounted and fgRef is populated
     const timer = setTimeout(() => {
       const fg = fgRef.current;
       if (!fg) return;
 
-      // Strong repulsion to push nodes apart
-      fg.d3Force("charge")?.strength(-500);
-      // Clear link distances
-      fg.d3Force("link")?.distance(140);
-      // Prevent node overlap
-      fg.d3Force("collide", forceCollide(35));
-      // Gentle centering
-      fg.d3Force("center")?.strength(0.12);
+      // Moderate repulsion — enough to spread but not magnetic
+      fg.d3Force("charge")?.strength(-250);
+      // Reasonable link distance
+      fg.d3Force("link")?.distance(80);
+      // Prevent node overlap based on node size
+      fg.d3Force("collide", forceCollide(18));
+      // Remove center force entirely — this was the "magnet" pulling everything together
+      fg.d3Force("center", null);
 
-      // Kick the simulation with high energy
       fg.d3ReheatSimulation();
     }, 100);
 
@@ -202,18 +216,18 @@ export default function KnowledgeGraphPage() {
           graphData={data}
           nodeLabel={nodeLabel}
           nodeColor={nodeColor}
-          nodeRelSize={6}
+          nodeRelSize={4}
           nodeCanvasObject={nodeCanvasObject}
           linkDirectionalArrowLength={3}
           linkDirectionalArrowRelPos={1}
           linkColor={linkColor}
-          linkWidth={1.5}
+          linkWidth={1}
           onNodeClick={handleNodeClick}
           backgroundColor="#ffffff"
-          d3AlphaDecay={0.02}
-          d3VelocityDecay={0.3}
-          cooldownTime={3000}
-          warmupTicks={50}
+          d3AlphaDecay={0.04}
+          d3VelocityDecay={0.4}
+          cooldownTime={2000}
+          warmupTicks={30}
           onEngineStop={handleEngineStop}
         />
       </div>
@@ -282,46 +296,59 @@ export default function KnowledgeGraphPage() {
                 </h3>
 
                 <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500" />
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        Slack Source
-                      </span>
+                  {/* Dynamic Evidence: Intent */}
+                  {(selectedNode.evidence?.intent ?? []).map((e, i) => (
+                    <div key={`intent-${i}`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          {e.source_type.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-2">
+                        &ldquo;{e.content}&rdquo;
+                      </p>
+                      <div className="text-[10px] text-gray-400">
+                        {e.author} • {new Date(e.timestamp).toLocaleDateString()}
+                      </div>
                     </div>
-                    <p className="text-xs italic text-gray-600 mb-2">
-                      &ldquo;Wait, if we use SQS here, we can actually skip the Step Functions
-                      orchestration...&rdquo;
-                    </p>
-                    <div className="text-[10px] text-gray-400">
-                      #architecture-internal • 2d ago
-                    </div>
-                  </div>
+                  ))}
 
-                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-gray-900" />
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        GitHub PR #14
-                      </span>
+                  {/* Dynamic Evidence: Execution */}
+                  {(selectedNode.evidence?.execution ?? []).map((e, i) => (
+                    <div key={`exec-${i}`} className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-900" />
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          {e.source_type.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium text-gray-700 mb-1">
+                        {e.content}
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        {e.author} • {new Date(e.timestamp).toLocaleDateString()}
+                      </p>
                     </div>
-                    <p className="text-xs font-medium text-gray-700 mb-1">
-                      feat: add durable SQS buffer for webhooks
-                    </p>
-                    <p className="text-[10px] text-gray-500">
-                      Verified by Memora Ingestion Adapter
-                    </p>
-                  </div>
+                  ))}
 
-                  <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 mt-8">
+                  {/* Fallback if no evidence */}
+                  {(selectedNode.evidence?.intent?.length === 0 && selectedNode.evidence?.execution?.length === 0) && (
+                    <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100">
+                      <p className="text-xs text-amber-700">No direct evidence artifacts captured yet. This decision was inferred from contextual patterns.</p>
+                    </div>
+                  )}
+
+                  {/* Consensus Badge */}
+                  <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 mt-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                        Consensus Status
+                        Confidence Score
                       </span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                     </div>
                     <p className="text-[11px] text-emerald-800 font-medium">
-                      Verified cross-platform consensus between discussion and implementation.
+                      {((selectedNode.confidence ?? 0) * 100).toFixed(0)}% confidence based on {(selectedNode.evidence?.intent?.length ?? 0) + (selectedNode.evidence?.execution?.length ?? 0)} evidence artifacts.
                     </p>
                   </div>
                 </div>
