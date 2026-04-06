@@ -11,53 +11,53 @@ import {
 import { cn } from "@/lib/utils";
 
 const pricingPlans = [
-    {
-        name: "Starter",
-        description: "For individuals looking to organize personal history.",
-        price: "₹0",
-        frequency: "/month",
-        features: [
-            "Up to 500 memory entries",
-            "Basic search",
-            "1 AI team assistant",
-            "Community support",
-        ],
-        buttonText: "Start for free",
-        popular: false,
-    },
-    {
-        name: "Teams",
-        description:
-            "For impactful teams that want to eliminate organizational memory loss.",
-        price: "₹1,499",
-        frequency: "/user/month",
-        features: [
-            "Unlimited memory entries",
-            "Advanced semantic search",
-            "10 AI team assistants",
-            "Shared workspaces",
-            "Priority email support",
-            "Custom integrations",
-        ],
-        buttonText: "Get Started",
-        popular: true,
-    },
-    {
-        name: "Enterprise",
-        description: "For large organizations with complex archiving needs.",
-        price: "Custom",
-        frequency: "",
-        features: [
-            "Everything in Teams, plus:",
-            "Unlimited AI assistants",
-            "SSO & advanced security",
-            "Dedicated account manager",
-            "Self-hosted option",
-            "SLA guarantee",
-        ],
-        buttonText: "Contact Sales",
-        popular: false,
-    },
+  {
+    name: "Starter",
+    description: "For small teams starting their architectural journey.",
+    price: "₹499",
+    frequency: "/user/month",
+    features: [
+      "Up to 3 repositories",
+      "Up to 3 Slack channels",
+      "500 AI queries / month per user",
+      "ADR generation (Limited)",
+      "Standard support",
+    ],
+    buttonText: "Start Trial",
+    popular: false,
+  },
+  {
+    name: "Growth",
+    description: "For scaling teams that need deep architectural insights.",
+    price: "₹899",
+    frequency: "/user/month",
+    features: [
+      "Up to 10 repositories",
+      "Up to 10 Slack channels",
+      "2000 AI queries / month",
+      "Full Knowledge Graph access",
+      "Full ADR automation",
+      "Priority email support",
+    ],
+    buttonText: "Get Started",
+    popular: true,
+  },
+  {
+    name: "Enterprise",
+    description: "For large organizations with complex compliance needs.",
+    price: "Custom",
+    frequency: "",
+    features: [
+      "Unlimited repos & integrations",
+      "Custom query limits",
+      "SLA & priority inference",
+      "Dedicated account manager",
+      "Custom security & SSO",
+      "24/7 dedicated support",
+    ],
+    buttonText: "Talk to Sales",
+    popular: false,
+  },
 ];
 
 export default function PricingPage() {

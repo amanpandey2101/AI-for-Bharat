@@ -475,11 +475,14 @@ def process_event_for_decisions(event: Dict) -> Optional[Dict]:
     status = "validated" if overall_confidence >= 0.85 else "inferred"
 
 
-    author = event.get("author", {})
-    if isinstance(author, dict):
-        author_name = author.get("name", "unknown")
-    else:
-        author_name = event.get("author_name", str(author) if author else "unknown")
+    # Extract author name from flat dict (preferred for agent flow) or nested object
+    author_name = event.get("author_name")
+    if not author_name:
+        author = event.get("author", {})
+        if isinstance(author, dict):
+            author_name = author.get("name", "unknown")
+        else:
+            author_name = str(author) if author else "unknown"
 
     evidence = Evidence(
         source_type=_map_event_type(event.get("event_type", "")),
