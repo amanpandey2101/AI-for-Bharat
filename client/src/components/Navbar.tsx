@@ -58,7 +58,6 @@ function Navbar() {
           <GhostButton name={"Pricing"} href="/pricing" />
           <GhostButton name={"Customers"} />
           <GhostButton name={"How it Works"} href="/how-it-works" />
-          <GhostButton name={"Contact"} />
         </div>
         <div className="flex flex-row items-center gap-2">
           <Link href={"/login"} className="hidden sm:block">

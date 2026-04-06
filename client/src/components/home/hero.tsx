@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "../ui/button";
 import { TextAnimate } from "../ui/text-animate";
 import Image from "next/image";
+import Link from "next/link";
 
 function Hero() {
   return (
@@ -75,9 +76,11 @@ function Hero() {
           <Button className="h-16 px-10 text-lg font-semibold w-full sm:w-auto cursor-pointer shadow-sm rounded-2xl hover:bg-gray-50 transition-all" variant={"outline"}>
              See the Demo
           </Button>
-          <Button className="bg-violet-600 text-white hover:shadow-violet-200 hover:shadow-2xl h-16 px-10 text-lg font-semibold w-full sm:w-auto hover:-translate-y-1 hover:bg-violet-700 transition-all duration-300 cursor-pointer rounded-2xl">
-            Get Started Free
-          </Button>
+          <Link href="/login" className="w-full sm:w-auto">
+            <Button className="bg-violet-600 text-white hover:shadow-violet-200 hover:shadow-2xl h-16 px-10 text-lg font-semibold w-full hover:-translate-y-1 hover:bg-violet-700 transition-all duration-300 cursor-pointer rounded-2xl">
+              Get Started Free
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
